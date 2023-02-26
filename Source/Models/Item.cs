@@ -38,6 +38,6 @@ public class Item
 
     public override int GetHashCode()
     {
-        return $"{this.Name1}{this.Price}{this.Discount}{this.Link}{this.Name2}".GetHashCode();
+        return string.GetHashCode($"{this.Name1}{this.Price}{this.Discount}{this.Link}{this.Name2}");
     }
 }

@@ -39,7 +39,7 @@ var adapterConfig = new AdapterConfig
     LocalPath = config.GetSection("AdapterConfig:LocalPath").Get<string>()
 };
 var alternativeAdapterConfig = config.GetSection("AlternativeAdapterConfig").Get<AdapterConfig>();
-if (trackerConfig is null || shopIDs is null || adapterConfig is null)
+if (shopIDs is null)
 {
     log.LogError("Couldn't define config for the tracker: wrong format of the configuration file");
     return;

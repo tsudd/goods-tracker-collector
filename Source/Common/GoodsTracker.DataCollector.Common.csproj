@@ -4,10 +4,26 @@
     <ProjectReference Include="..\Models\GoodsTracker.DataCollector.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="28.0.1" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.6.0" />
+    <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.Core.v2.1">
+      <!-- PLACE HDB CLIENT DLLs FOR DOTNETCORE AND PLACE THEM TO THE HDBCLIENT -->
+      <!-- <HintPath>HdbClient\v2.1\Sap.Data.Hana.Core.v2.1.dll</HintPath> -->
+      <HintPath>./DbClient/v2.1/Sap.Data.Hana.Core.v2.1.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
 </Project>

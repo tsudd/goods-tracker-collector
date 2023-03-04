@@ -9,4 +9,3 @@ services:
       - .env
     volumes:
       - ~/Documents/tracker-db-data:/var/lib/postgresql/data/
-      - ./db/init_script.sql:/docker-entrypoint-initdb.d/init_script.sql

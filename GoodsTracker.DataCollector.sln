@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodsTracker.DataCollector.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodsTracker.DataCollector.Models", "Source\Models\GoodsTracker.DataCollector.Models.csproj", "{3A3C96F5-BB80-441E-87AF-8611B97FDE85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodsTracker.DataCollector.DB", "Source\DB\GoodsTracker.DataCollector.DB.csproj", "{D259B731-E6AB-4B99-8224-DB78771AEE6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,10 +34,15 @@ Global
 		{3A3C96F5-BB80-441E-87AF-8611B97FDE85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A3C96F5-BB80-441E-87AF-8611B97FDE85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A3C96F5-BB80-441E-87AF-8611B97FDE85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D259B731-E6AB-4B99-8224-DB78771AEE6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D259B731-E6AB-4B99-8224-DB78771AEE6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D259B731-E6AB-4B99-8224-DB78771AEE6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D259B731-E6AB-4B99-8224-DB78771AEE6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A70C13F1-F06A-49CF-A854-5B22774D3B20} = {83D239FD-FFC6-4D03-A872-50B3DD888784}
 		{9389D8E8-CA5C-4189-9EE8-247BDC73F436} = {83D239FD-FFC6-4D03-A872-50B3DD888784}
 		{3A3C96F5-BB80-441E-87AF-8611B97FDE85} = {83D239FD-FFC6-4D03-A872-50B3DD888784}
+		{D259B731-E6AB-4B99-8224-DB78771AEE6D} = {83D239FD-FFC6-4D03-A872-50B3DD888784}
 	EndGlobalSection
 EndGlobal

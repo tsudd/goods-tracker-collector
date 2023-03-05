@@ -27,5 +27,6 @@ public class CollectorContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasPostgresExtension("btree_gin");
         modelBuilder.HasPostgresExtension("pg_trgm");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CollectorContext).Assembly);
     }
 }

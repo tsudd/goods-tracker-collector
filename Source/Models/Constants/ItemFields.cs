@@ -1,7 +1,8 @@
 namespace GoodsTracker.DataCollector.Models.Constants;
+
 public enum ItemFields
 {
-    Name1 = 0,
+    Name1,
     Name2,
     Name3,
     Price,
@@ -18,4 +19,6 @@ public enum ItemFields
     Portion,
     Categories,
     ImageLink,
+    Guid,
+    Adult,
 }

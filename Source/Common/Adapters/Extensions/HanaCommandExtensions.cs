@@ -5,7 +5,7 @@ namespace Common.Adapters.Extensions;
 
 internal static class HanaCommandExtensions
 {
-    internal static void AddItemRecordToInsert(this HanaCommand cmd, Item item, object itemId)
+    internal static void AddItemRecordToInsert(this HanaCommand cmd, ItemModel item, object itemId)
     {
         cmd.Parameters.Add(CreateParameter("p0", itemId));
         cmd.Parameters.Add(CreateParameter("p1", item.Price));
@@ -13,14 +13,14 @@ internal static class HanaCommandExtensions
         cmd.Parameters.Add(CreateParameter("p3", IsOnDiscount(item)));
     }
 
-    internal static void AddItemRecordToInsert(this HanaCommand cmd, Item item)
+    internal static void AddItemRecordToInsert(this HanaCommand cmd, ItemModel item)
     {
         cmd.Parameters.Add(CreateParameter("p0", item.Price));
         cmd.Parameters.Add(CreateParameter("p1", item.Discount));
         cmd.Parameters.Add(CreateParameter("p2", IsOnDiscount(item)));
     }
 
-    internal static void AddItemToInsert(this HanaCommand cmd, Item item)
+    internal static void AddItemToInsert(this HanaCommand cmd, ItemModel item)
     {
         cmd.Parameters.Add(CreateParameter("p0", item.Name1));
         cmd.Parameters.Add(CreateParameter("p1", item.Name2));
@@ -29,8 +29,8 @@ internal static class HanaCommandExtensions
         cmd.Parameters.Add(CreateParameter("p4", item.Country));
         cmd.Parameters.Add(CreateParameter("p5", item.Producer));
         cmd.Parameters.Add(CreateParameter("p6", item.VendorCode));
-        cmd.Parameters.Add(CreateParameter("p7", item.Wieght));
-        cmd.Parameters.Add(CreateParameter("p8", item.WieghtUnit));
+        cmd.Parameters.Add(CreateParameter("p7", item.Weight));
+        cmd.Parameters.Add(CreateParameter("p8", item.WeightUnit));
         cmd.Parameters.Add(CreateParameter("p9", item.Compound));
         cmd.Parameters.Add(CreateParameter("p10", item.Protein));
         cmd.Parameters.Add(CreateParameter("p11", item.Fat));
@@ -38,7 +38,11 @@ internal static class HanaCommandExtensions
         cmd.Parameters.Add(CreateParameter("p13", item.Portion));
     }
 
-    internal static void AddItemImageLinkToUpdate(this HanaCommand cmd, Item item, object itemId)
+    internal static void AddItemImageLinkToUpdate(
+        this HanaCommand cmd,
+        ItemModel item,
+        object itemId
+    )
     {
         cmd.Parameters.Add(CreateParameter("p0", item.Link));
         cmd.Parameters.Add(CreateParameter("p1", itemId));
@@ -68,8 +72,7 @@ internal static class HanaCommandExtensions
         }
     }
 
-    private static int IsOnDiscount(Item item)
-    => item.Discount is not null ? 1 : 0;
+    private static int IsOnDiscount(ItemModel item) => item.Discount is not null ? 1 : 0;
 
     private static HanaParameter CreateParameter(string pName, object? paramValue)
     {

@@ -12,7 +12,9 @@ using GoodsTracker.DataCollector.Common.Scrapers;
 using GoodsTracker.DataCollector.Common.Scrapers.Abstractions;
 using GoodsTracker.DataCollector.Common.Trackers;
 using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
+
 using Microsoft.Extensions.Logging;
+
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
@@ -83,8 +85,8 @@ public class DataCollectorFactory : IDataCollectorFactory
                     config,
                     loggerFactory.CreateLogger<YaNeighborsScraper>(),
                     parser ?? CreateParser(config.ParserName, loggerFactory),
-                    mapper,
-                    requester),
+                    GetWebDriverInstance(),
+                    mapper),
             // nameof(EmallScraper) => new EmallScraper(
             //     config,
             //     loggerFactory.CreateLogger<EmallScraper>(),

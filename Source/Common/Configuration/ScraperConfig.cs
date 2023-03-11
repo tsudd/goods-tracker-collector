@@ -10,7 +10,8 @@ public sealed class ScraperConfig
     public Dictionary<string, string> Headers { get; init; } = new Dictionary<string, string>();
     public string ShopUrl { get; init; } = String.Empty;
     public string ShopStartRecource { get; init; } = String.Empty;
-    public string ShopApi { get; init; } = String.Empty;
-    public Dictionary<string, string> HTMLSections { get; init; } = new Dictionary<string, string>();
+    public string? ShopApi { get; init; }
+    public Dictionary<string, string> HTMLSections { get; init; } =
+        new Dictionary<string, string>();
     public string ItemMapper { get; init; } = String.Empty;
 }

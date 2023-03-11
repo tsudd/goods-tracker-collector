@@ -7,15 +7,18 @@ using System.Globalization;
 using GoodsTracker.DataCollector.Common.Adapters.Abstractions;
 
 namespace GoodsTracker.DataCollector.Common.Adapters;
+
 public class CsvAdapter : IDataAdapter
 {
     private ILogger _logger;
     private AdapterConfig _config;
+
     public CsvAdapter(AdapterConfig config, ILogger<CsvAdapter> logger)
     {
         _config = config;
         _logger = logger;
     }
+
     public void SaveItems(IItemTracker tracker, IEnumerable<string> shopIds)
     {
         _logger.LogInformation("Writing items into CSV files...");
@@ -33,11 +36,12 @@ public class CsvAdapter : IDataAdapter
                 using (var fs = new StreamWriter(fileName))
                 using (var csvWriter = new CsvWriter(fs, CultureInfo.CurrentCulture))
                 {
-                    csvWriter.WriteHeader<Item>();
+                    csvWriter.WriteHeader<ItemModel>();
                     csvWriter.NextRecord();
                     csvWriter.WriteRecords(items);
                     _logger.LogInformation(
-                        $"{items.Count()} items from shop '{shop}' were writed to the {fileName}");
+                        $"{items.Count()} items from shop '{shop}' were writed to the {fileName}"
+                    );
                 }
             }
             catch (Exception ex)

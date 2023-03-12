@@ -13,15 +13,17 @@ var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var loggerFactory = LoggerFactory.Create(builder =>
+using var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder
-        .SetMinimumLevel(LogLevel.Information)
         .AddConsole()
         .AddConfiguration(config.GetSection("Logging"));
 });
 var log = loggerFactory.CreateLogger<Program>();
-log.LogInformation($"Configuration was loaded. Tracker is starting now in {environment} mode.");
+LoggerMessage.Define(
+    LogLevel.Information, 0,
+    $"Configuration was loaded. Tracker is starting now in {environment} mode.")(
+        log, null);
 
 //------------------handling tracker configuration
 // TODO: get tracker configuraiton deeply 
@@ -35,18 +37,24 @@ var adapterConfig = new AdapterConfig
 {
     AdapterName = config.GetSection("AdapterConfig:AdapterName").Get<string>(),
     Arguments = Environment.GetEnvironmentVariable("HANA_ConnectionString")
-    ?? throw new ApplicationException("couldn't get connection string from env"),
+        ?? throw new ApplicationException("couldn't get connection string from env"),
     LocalPath = config.GetSection("AdapterConfig:LocalPath").Get<string>()
 };
 var alternativeAdapterConfig = config.GetSection("AlternativeAdapterConfig").Get<AdapterConfig>();
 if (shopIDs is null)
 {
-    log.LogError("Couldn't define config for the tracker: wrong format of the configuration file");
+    LoggerMessage.Define(
+        LogLevel.Error, 0,
+        "Couldn't define config for the tracker: wrong format of the configuration file")(
+            log, null);
     return;
 }
 if (alternativeAdapterConfig is null)
 {
-    log.LogWarning("Couldn't get config for alternative data adapter. Data might be lost by proceeding without it.");
+    LoggerMessage.Define(
+        LogLevel.Warning, 0,
+        "Couldn't get config for alternative data adapter. Data might be lost by proceeding without it.")(
+            log, null);
 }
 IDataCollectorFactory? collectorFactory;
 try
@@ -56,15 +64,22 @@ try
 }
 catch (ArgumentException ex)
 {
-    log.LogError($"Invalid configuration for factories: {ex.Message}");
+    LoggerMessage.Define(
+        LogLevel.Error, 0,
+        $"Invalid configuration for factories: {ex.Message}")(
+            log, ex);
     return;
 }
-log.LogInformation("Tracker to be launched: '{0}'. Number of configs for scrapers: '{1}'",
-    trackerConfig.TrackerName,
-    trackerConfig.ScrapersConfigurations.Count());
+LoggerMessage.Define(
+    LogLevel.Information, 0,
+    $"Tracker to be launched: '{trackerConfig.TrackerName}'. Number of configs for scrapers: '{trackerConfig.ScrapersConfigurations.Count()}'")(
+        log, null);
 
 //------------------initialization of the tracker with provided config
-log.LogInformation("Tracker instance creation...");
+LoggerMessage.Define(
+    LogLevel.Information, 0,
+    "Tracker instance creation...")(
+        log, null);
 IItemTracker? tracker;
 try
 {
@@ -72,22 +87,34 @@ try
 }
 catch (ArgumentException ex)
 {
-    log.LogError("Error while tracker initialization: {0}", ex.Message);
+    LoggerMessage.Define(
+        LogLevel.Error, 0,
+        $"Error while tracker initialization: {ex.Message}")(
+            log, ex);
     return;
 }
 catch (Exception ex)
 {
-    log.LogError("Unspecified error occurred while tracker creation: {0}", ex.Message);
+    LoggerMessage.Define(
+        LogLevel.Error, 0,
+        $"Unspecified error occurred while tracker creation: {ex.Message}")(
+            log, ex);
     return;
 }
 
 //------------------fetching data with configured tracker
-log.LogInformation("Starting scraping items.");
-await tracker.FetchItemsAsync();
+LoggerMessage.Define(
+    LogLevel.Information, 0,
+    "Starting scraping items.")(
+        log, null);
+await tracker.FetchItemsAsync().ConfigureAwait(false);
 
 //------------------record fetch data
 
-log.LogInformation("Sending fetched data to the DB adapter");
+LoggerMessage.Define(
+    LogLevel.Information, 0,
+    "Sending fetched data to the adapter")(
+        log, null);
 
 try
 {
@@ -98,21 +125,33 @@ catch (ApplicationException ex)
 {
     if (alternativeAdapterConfig is not null)
     {
-        log.LogWarning(
-        $"Error occured during saving of items into the DB: {ex.Message}. Saving items using alternative data adapter for future restore");
+        LoggerMessage.Define(
+            LogLevel.Warning, 0,
+            $"Error occured during saving of items into the DB: {ex.Message}. Saving items using alternative data adapter for future restore")(
+                log, ex);
         var alternativeAdapter = collectorFactory.CreateDataAdapter(alternativeAdapterConfig, loggerFactory);
         alternativeAdapter.SaveItems(tracker, shopIDs);
     }
     else
     {
-        log.LogError($"Error occured during data save: {ex.Message}");
+        LoggerMessage.Define(
+            LogLevel.Error, 0,
+            $"Error occured during data save: {ex.Message}")(
+                log, ex);
     }
 
 }
 
 //------------------clearing & disposing
-log.LogInformation("Clearing fetched data...");
+LoggerMessage.Define(
+            LogLevel.Information, 0,
+            "Clearing fetched data...")(
+                log, null);
+
 tracker.ClearData();
 collectorFactory.Dispose();
 
-log.LogInformation("Tracker has ended its work.");
+LoggerMessage.Define(
+            LogLevel.Information, 0,
+            "Tracker has ended its work.")(
+                log, null);

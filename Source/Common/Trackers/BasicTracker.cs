@@ -24,10 +24,12 @@ public class BasicTracker : IItemTracker
     {
         _config = config;
         _logger = loggerFactory.CreateLogger<BasicTracker>();
-        // _shopItems = new List<Tuple<string, List<Item>>>();
         _shopItems = new Dictionary<string, List<ItemModel>>();
         Scrapers = new List<IScraper>();
-        _logger.LogInformation("Scrapers creation from provided configs...");
+        LoggerMessage.Define(
+                LogLevel.Information, 0,
+                "Creating scrapers from provided configs...")(
+                    this._logger, null);
         foreach (var conf in _config.ScrapersConfigurations)
         {
             Scrapers.Add(
@@ -38,9 +40,15 @@ public class BasicTracker : IItemTracker
                 )
             );
             _shopItems.Add(conf.ShopID, new List<ItemModel>());
-            _logger.LogInformation("'{0}' was created", conf.Name);
+            LoggerMessage.Define(
+                LogLevel.Information, 0,
+                $"'{conf.Name}' was created")(
+                    this._logger, null);
         }
-        _logger.LogInformation("Tracker was created.");
+        LoggerMessage.Define(
+                LogLevel.Information, 0,
+                "Tracker was created.")(
+                    this._logger, null);
     }
 
     public void ClearData()
@@ -56,21 +64,20 @@ public class BasicTracker : IItemTracker
         foreach (var scraper in Scrapers)
         {
             var conf = scraper.GetConfig();
-            _logger.LogInformation("Scraping from '{0}'...", conf.ShopName);
+
+            LoggerMessage.Define(
+                LogLevel.Information, 0,
+                $"Scraping from '{conf.ShopName}'...")(
+                    this._logger, null);
+
             try
             {
                 _shopItems[conf.ShopID].AddRange(await scraper.GetItemsAsync());
-                _logger.LogInformation(
-                    $"{_shopItems[conf.ShopID].Count} items were scraped from {conf.ShopName}"
-                );
-            }
-            catch (JsonException ex)
-            {
-                NotifyScraperError(conf, ex);
-            }
-            catch (HtmlWebException ex)
-            {
-                NotifyScraperError(conf, ex);
+
+                LoggerMessage.Define(
+                    LogLevel.Information, 0,
+                    $"{_shopItems[conf.ShopID].Count} items were scraped from {conf.ShopName}")(
+                        this._logger, null);
             }
             catch (Exception ex)
             {
@@ -81,7 +88,10 @@ public class BasicTracker : IItemTracker
 
     private void NotifyScraperError(ScraperConfig conf, Exception ex)
     {
-        _logger.LogError($"'{conf.Name}' has ended its work: {ex.Message}");
+        LoggerMessage.Define(
+                    LogLevel.Critical, 0,
+                    $"'{conf.Name}' has ended its work: {ex.Message}")(
+                        this._logger, ex);
     }
 
     public IEnumerable<ItemModel>? GetShopItems(string shopId)
@@ -92,11 +102,10 @@ public class BasicTracker : IItemTracker
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
-                "'{0}' couldn't return shop items: {1}",
-                _config.TrackerName,
-                ex.Message
-            );
+            LoggerMessage.Define(
+                    LogLevel.Warning, 0,
+                    $"'{_config.TrackerName}' couldn't return shop items: {ex.Message}")(
+                        this._logger, ex);
             return null;
         }
     }

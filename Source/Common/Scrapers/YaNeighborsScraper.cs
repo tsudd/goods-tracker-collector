@@ -15,6 +15,8 @@ using System.Text.RegularExpressions;
 using GoodsTracker.DataCollector.Common.Parsers.Exceptions;
 using GoodsTracker.DataCollector.Common.Scrapers.Extensions;
 
+using LoggingLevel = Microsoft.Extensions.Logging.LogLevel;
+
 namespace GoodsTracker.DataCollector.Common.Scrapers;
 
 public sealed class YaNeighborsScraper : IScraper
@@ -64,7 +66,6 @@ public sealed class YaNeighborsScraper : IScraper
         _parser = parser;
         _driver = driver;
         _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-        _logger.LogInformation("Scraper was created");
     }
 
     public ScraperConfig GetConfig()
@@ -133,7 +134,10 @@ public sealed class YaNeighborsScraper : IScraper
 
         if (itemNodes == null)
         {
-            _logger.LogWarning($"couldn't parse items from category: {recourse.CategoryLink}");
+            LoggerMessage.Define(
+                    LoggingLevel.Warning, 0,
+                    $"couldn't parse items from category: {recourse.CategoryLink}")(
+                        this._logger, null);
             return parsedItems;
         }
 
@@ -149,7 +153,10 @@ public sealed class YaNeighborsScraper : IScraper
 
         if (!productGuidMatch.Success)
         {
-            _logger.LogError("couldn't match product GUID to fetch info: " + productLink);
+            LoggerMessage.Define(
+                    LoggingLevel.Error, 0,
+                    $"couldn't match product GUID to fetch info: {productLink}")(
+                        this._logger, null);
             return null;
         }
         try
@@ -161,11 +168,17 @@ public sealed class YaNeighborsScraper : IScraper
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError("couldn't fetch product from " + productLink + ":" + ex.Message);
+            LoggerMessage.Define(
+                    LoggingLevel.Error, 0,
+                    $"couldn't fetch product from {productLink}: {ex.Message}")(
+                        this._logger, ex);
         }
         catch (InvalidItemFormatException formatException)
         {
-            _logger.LogError("couldn't parse product info from" + productLink + ":" + formatException.Message);
+            LoggerMessage.Define(
+                    LoggingLevel.Error, 0,
+                    $"couldn't parse product info from {productLink}: {formatException.Message}")(
+                        this._logger, formatException);
         }
         return null;
     }
@@ -188,11 +201,10 @@ public sealed class YaNeighborsScraper : IScraper
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogWarning(
-                    "couldn't fetch product info: "
-                        + ex.Message
-                        + " request will be retried after the delay"
-                );
+                LoggerMessage.Define(
+                    LoggingLevel.Warning, 0,
+                    $"couldn't fetch product info: {ex.Message}. Request will be retried after the delay")(
+                        this._logger, ex);
                 await Task.Delay(delayBetweenRequests).ConfigureAwait(false);
             }
         } while (attempts <= requestAttemptsMaxAmount);
@@ -211,10 +223,13 @@ public sealed class YaNeighborsScraper : IScraper
         {
             _wait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(condition));
         }
-        catch (WebDriverTimeoutException)
+        catch (WebDriverTimeoutException ex)
         {
-            _logger.LogWarning($"loading of the page took to much: {_driver.Url}");
-            throw new InvalidOperationException("coudln't get category links (CAPTCHA accured!!!)");
+            LoggerMessage.Define(
+                LoggingLevel.Critical, 0,
+                $"loading of the page took to much: {_driver.Url}")(
+                    this._logger, ex);
+            throw new InvalidOperationException("coudln't get category links after page loading.");
         }
     }
 }

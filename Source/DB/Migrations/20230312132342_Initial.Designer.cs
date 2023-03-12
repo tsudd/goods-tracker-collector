@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodsTracker.DataCollector.DB.Migrations
 {
     [DbContext(typeof(CollectorContext))]
-    [Migration("20230305194248_Initial")]
+    [Migration("20230312132342_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -102,6 +102,10 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Adult")
+                        .HasColumnType("boolean")
+                        .HasColumnName("adult");
+
                     b.Property<float>("Carbo")
                         .HasColumnType("real")
                         .HasColumnName("carbo");
@@ -117,6 +121,10 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     b.Property<string>("ImageLink")
                         .HasColumnType("text")
                         .HasColumnName("image_link");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text")
+                        .HasColumnName("metadata");
 
                     b.Property<string>("Name1")
                         .IsRequired()
@@ -138,6 +146,10 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     b.Property<float>("Protein")
                         .HasColumnType("real")
                         .HasColumnName("protein");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("public_id");
 
                     b.Property<int>("VendorCode")
                         .HasColumnType("integer")

@@ -11,6 +11,7 @@ public class Item
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
+    public Guid PublicId { get; set; }
 
     [Required]
     public string Name1 { get; set; } = string.Empty;
@@ -27,7 +28,11 @@ public class Item
     public float Fat { get; set; }
     public float Carbo { get; set; }
     public float Portion { get; set; }
+    public bool Adult { get; set; }
     public int VendorId { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? Metadata { get; set; }
 
     // FK
     [Required]

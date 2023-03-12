@@ -70,6 +70,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    public_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name1 = table.Column<string>(type: "text", nullable: false),
                     name2 = table.Column<string>(type: "text", nullable: true),
                     name3 = table.Column<string>(type: "text", nullable: true),
@@ -82,7 +83,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     fat = table.Column<float>(type: "real", nullable: false),
                     carbo = table.Column<float>(type: "real", nullable: false),
                     portion = table.Column<float>(type: "real", nullable: false),
-                    vendor_id = table.Column<int>(type: "integer", nullable: false)
+                    adult = table.Column<bool>(type: "boolean", nullable: false),
+                    vendor_id = table.Column<int>(type: "integer", nullable: false),
+                    metadata = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

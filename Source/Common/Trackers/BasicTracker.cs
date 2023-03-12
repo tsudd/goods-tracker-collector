@@ -6,49 +6,36 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using GoodsTracker.DataCollector.Models;
 using GoodsTracker.DataCollector.Common.Factories.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace GoodsTracker.DataCollector.Common.Trackers;
 
 public class BasicTracker : IItemTracker
 {
-    public List<IScraper> Scrapers { get; private set; }
-    public Dictionary<string, List<ItemModel>> _shopItems;
-    private ILogger<BasicTracker> _logger;
-    private TrackerConfig _config;
+    private List<IScraper> _scrapers = new List<IScraper>();
+    private Dictionary<string, List<ItemModel>> _shopItems;
+    private readonly ILogger<BasicTracker> _logger;
+    private readonly TrackerConfig _config;
 
     public BasicTracker(
-        TrackerConfig config,
-        ILoggerFactory loggerFactory,
+        IOptions<TrackerConfig> config,
+        ILogger<BasicTracker> logger,
         IDataCollectorFactory factory
     )
     {
-        _config = config;
-        _logger = loggerFactory.CreateLogger<BasicTracker>();
+        _config = config.Value;
+        _logger = logger;
         _shopItems = new Dictionary<string, List<ItemModel>>();
-        Scrapers = new List<IScraper>();
-        LoggerMessage.Define(
-                LogLevel.Information, 0,
-                "Creating scrapers from provided configs...")(
-                    this._logger, null);
         foreach (var conf in _config.ScrapersConfigurations)
         {
-            Scrapers.Add(
+            _scrapers.Add(
                 factory.CreateScraper(
                     conf,
-                    loggerFactory,
-                    factory.CreateParser(conf.ParserName, loggerFactory)
+                    factory.CreateParser(conf.ParserName)
                 )
             );
             _shopItems.Add(conf.ShopID, new List<ItemModel>());
-            LoggerMessage.Define(
-                LogLevel.Information, 0,
-                $"'{conf.Name}' was created")(
-                    this._logger, null);
         }
-        LoggerMessage.Define(
-                LogLevel.Information, 0,
-                "Tracker was created.")(
-                    this._logger, null);
     }
 
     public void ClearData()
@@ -61,7 +48,7 @@ public class BasicTracker : IItemTracker
 
     public async Task FetchItemsAsync()
     {
-        foreach (var scraper in Scrapers)
+        foreach (var scraper in _scrapers)
         {
             var conf = scraper.GetConfig();
 
@@ -72,7 +59,7 @@ public class BasicTracker : IItemTracker
 
             try
             {
-                _shopItems[conf.ShopID].AddRange(await scraper.GetItemsAsync());
+                _shopItems[conf.ShopID].AddRange(await scraper.GetItemsAsync().ConfigureAwait(false));
 
                 LoggerMessage.Define(
                     LogLevel.Information, 0,

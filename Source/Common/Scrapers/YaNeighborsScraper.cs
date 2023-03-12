@@ -185,7 +185,7 @@ public sealed class YaNeighborsScraper : IScraper
 
     private async Task<string> RequestProductInfoAsync(string productGuid)
     {
-        const string productInfo = "https://eda.yandex.by/api/v2/menu/product";
+        var productInfoUri = new Uri("https://eda.yandex.by/api/v2/menu/product");
 
         var attempts = 0;
         do
@@ -194,7 +194,7 @@ public sealed class YaNeighborsScraper : IScraper
             try
             {
                 return await _requester.PostAsync(
-                    productInfo,
+                    productInfoUri,
                     _config.Headers,
                     GenerateContentBodyForProductFetch(productGuid))
                     .ConfigureAwait(false);

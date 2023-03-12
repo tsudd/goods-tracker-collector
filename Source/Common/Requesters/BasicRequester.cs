@@ -27,7 +27,7 @@ public class BasicRequester : IRequester
         Dictionary<string, string>? headers = null
     )
     {
-        var request = CreateRequest(url, headers);
+        using var request = CreateRequest(url, headers);
         var response = await Client.SendAsync(request).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
@@ -39,13 +39,13 @@ public class BasicRequester : IRequester
     }
 
     public async Task<string> PostAsync(
-        string url,
+        Uri uri,
         Dictionary<string, string>? headers = null,
         string data = ""
     )
     {
         var result = "";
-        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(url));
+        var request = new HttpRequestMessage(HttpMethod.Post, uri);
         if ((headers != null))
         {
             foreach (var header in headers)
@@ -61,7 +61,7 @@ public class BasicRequester : IRequester
         {
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"couldn't perform POST to {url}");
+                throw new HttpRequestException($"couldn't perform POST to {uri.AbsoluteUri}");
             }
             using (
                 var reader = new StreamReader(
@@ -77,7 +77,7 @@ public class BasicRequester : IRequester
 
     public async Task<string> GetAsync(string url, Dictionary<string, string>? headers = null)
     {
-        var request = CreateRequest(url, headers);
+        using var request = CreateRequest(url, headers);
         using (var response = await Client.SendAsync(request).ConfigureAwait(false))
         {
             if (!response.IsSuccessStatusCode)
@@ -88,7 +88,7 @@ public class BasicRequester : IRequester
         }
     }
 
-    private HttpRequestMessage CreateRequest(string url, Dictionary<string, string>? headers = null)
+    private static HttpRequestMessage CreateRequest(string url, Dictionary<string, string>? headers = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         if (headers != null)

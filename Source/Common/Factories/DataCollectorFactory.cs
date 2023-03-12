@@ -14,6 +14,7 @@ using GoodsTracker.DataCollector.Common.Trackers;
 using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -21,60 +22,44 @@ using OpenQA.Selenium.Chrome;
 namespace GoodsTracker.DataCollector.Common.Factories;
 public class DataCollectorFactory : IDataCollectorFactory
 {
-    protected static IDataCollectorFactory? _instance;
     protected static IWebDriver? _driverInstanse;
-    protected DataCollectorFactory() { }
-
-    public IDataAdapter CreateDataAdapter(AdapterConfig config, ILoggerFactory loggerFactory)
+    protected readonly ILoggerFactory _loggerFactory;
+    public DataCollectorFactory(ILoggerFactory loggerFactory)
     {
-        return config.AdapterName switch
+        _loggerFactory = loggerFactory;
+    }
+
+    public IDataAdapter CreateDataAdapter(IOptions<AdapterConfig> options)
+    {
+        var providedConfig = options.Value;
+        return providedConfig.AdapterName switch
         {
             nameof(HanaAdapter) => new HanaAdapter(
-                    config,
-                    loggerFactory.CreateLogger<HanaAdapter>()),
+                    providedConfig,
+                    _loggerFactory.CreateLogger<HanaAdapter>()),
             nameof(CsvAdapter) => new CsvAdapter(
-                    config,
-                    loggerFactory.CreateLogger<CsvAdapter>()),
+                    providedConfig,
+                    _loggerFactory.CreateLogger<CsvAdapter>()),
             var _ =>
                 throw new ArgumentException(
-                    $"couldn't create {config.AdapterName}: no such data adapter in the app"
+                    $"couldn't create {providedConfig.AdapterName}: no such data adapter in the app"
                 )
         };
     }
 
-    public IItemMapper CreateMapper(string mapperName)
-    {
-        return mapperName switch
-        {
-            nameof(BasicMapper) => new BasicMapper(),
-            var _ => throw new ArgumentException($"couldn't create {mapperName}: no such mapper in the app."),
-        };
-    }
-
     public IItemParser CreateParser(
-        string parserName,
-        ILoggerFactory loggerFactory)
+        string parserName)
     {
         return parserName switch
         {
-            nameof(YaNeighborsParser) => new YaNeighborsParser(loggerFactory.CreateLogger<YaNeighborsParser>()),
+            nameof(YaNeighborsParser) => new YaNeighborsParser(_loggerFactory.CreateLogger<YaNeighborsParser>()),
             // nameof(EmallParser) => new EmallParser(loggerFactory.CreateLogger<EmallParser>()),
             var _ => throw new ArgumentException($"couldn't create {parserName}: no such parser in the app."),
         };
     }
 
-    public IRequester CreateRequester(string requesterName, HttpClient? client = null)
-    {
-        return requesterName switch
-        {
-            nameof(BasicRequester) => new BasicRequester(client),
-            var _ => throw new ArgumentException($"coudln't create {requesterName}")
-        };
-    }
-
     public IScraper CreateScraper(
         ScraperConfig config,
-        ILoggerFactory loggerFactory,
         IItemParser? parser = null,
         IItemMapper? mapper = null,
         IRequester? requester = null)
@@ -83,8 +68,8 @@ public class DataCollectorFactory : IDataCollectorFactory
         {
             nameof(YaNeighborsScraper) => new YaNeighborsScraper(
                     config,
-                    loggerFactory.CreateLogger<YaNeighborsScraper>(),
-                    parser ?? CreateParser(config.ParserName, loggerFactory),
+                    _loggerFactory.CreateLogger<YaNeighborsScraper>(),
+                    parser ?? CreateParser(config.ParserName),
                     GetWebDriverInstance(),
                     mapper),
             // nameof(EmallScraper) => new EmallScraper(
@@ -101,30 +86,21 @@ public class DataCollectorFactory : IDataCollectorFactory
     }
 
     public IItemTracker CreateTracker(
-        TrackerConfig config,
-        ILoggerFactory loggerFactory)
+        IOptions<TrackerConfig> options)
     {
+        var config = options.Value;
         return config.TrackerName switch
         {
             nameof(BasicTracker) =>
                 new BasicTracker(
-                    config,
-                    loggerFactory,
+                    options,
+                    _loggerFactory.CreateLogger<BasicTracker>(),
                     this
                 ),
             var _ =>
                 throw new ArgumentException(
                     $"couldn't create {config.TrackerName}: no such tracker in the app"),
         };
-    }
-
-    public static IDataCollectorFactory GetInstance()
-    {
-        if (_instance is null)
-        {
-            _instance = new DataCollectorFactory();
-        }
-        return _instance;
     }
 
     protected static IWebDriver GetWebDriverInstance()

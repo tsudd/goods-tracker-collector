@@ -53,7 +53,6 @@ public class DataCollectorFactory : IDataCollectorFactory
         return parserName switch
         {
             nameof(YaNeighborsParser) => new YaNeighborsParser(_loggerFactory.CreateLogger<YaNeighborsParser>()),
-            // nameof(EmallParser) => new EmallParser(loggerFactory.CreateLogger<EmallParser>()),
             var _ => throw new ArgumentException($"couldn't create {parserName}: no such parser in the app."),
         };
     }
@@ -72,13 +71,6 @@ public class DataCollectorFactory : IDataCollectorFactory
                     parser ?? CreateParser(config.ParserName),
                     GetWebDriverInstance(),
                     mapper),
-            // nameof(EmallScraper) => new EmallScraper(
-            //     config,
-            //     loggerFactory.CreateLogger<EmallScraper>(),
-            //     parser ?? CreateParser(config.ParserName, loggerFactory),
-            //     mapper ?? CreateMapper(config.ItemMapper),
-            //     GetWebDriverInstance()
-            // ),
             var _ =>
                     throw new ArgumentException(
                         $"couldn't create {config.Name}: no such scraper in the app"),

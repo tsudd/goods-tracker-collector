@@ -23,26 +23,4 @@ public class ItemModel
     public List<string>? Categories { get; init; }
     public string? Link { get; init; }
     public string CategoriesEnum => Categories != null ? string.Join('|', Categories) : "";
-
-    public override bool Equals(object? obj)
-    {
-        if (obj == null)
-            return false;
-        if (object.ReferenceEquals(this, obj))
-            return true;
-        var item = obj as ItemModel;
-        return this.Name1 == item?.Name1
-            && this.Name2 == item?.Name2
-            && this.Name3 == item?.Name3
-            && this.Price == item?.Price
-            && this.Discount == item?.Discount
-            && this.Link == item?.Link;
-    }
-
-    public override int GetHashCode()
-    {
-        return string.GetHashCode(
-            $"{this.Name1}{this.Price}{this.Discount}{this.Link}{this.Name2}"
-        );
-    }
 }

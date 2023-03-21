@@ -37,7 +37,7 @@ public class BasicMapper : IItemMapper
         };
     }
 
-    protected int? ParseIntOrDefault(string numberValue)
+    protected static int? ParseIntOrDefault(string numberValue)
     {
         if (Int32.TryParse(numberValue, out int result))
         {
@@ -46,7 +46,7 @@ public class BasicMapper : IItemMapper
         return null;
     }
 
-    protected float? ParseFloatOrDefault(string numberValue)
+    protected static float? ParseFloatOrDefault(string numberValue)
     {
         if (
             float.TryParse(
@@ -62,7 +62,7 @@ public class BasicMapper : IItemMapper
         return null;
     }
 
-    protected bool? ParseBooleanOrDefault(string boolValue)
+    protected static bool? ParseBooleanOrDefault(string boolValue)
     {
         if (bool.TryParse(boolValue, out bool result))
         {
@@ -71,12 +71,14 @@ public class BasicMapper : IItemMapper
         return null;
     }
 
-    protected List<string> ParseCategoriesOrEmpty(string categoriesValue)
+    protected static List<string> ParseCategoriesOrEmpty(string categoriesValue)
     {
+        ArgumentNullException.ThrowIfNull(categoriesValue);
+
         return categoriesValue.Split(IItemMapper.CategoriesSeparator).ToList();
     }
 
-    protected Guid? ParseGuidOrDefault(string guidValue)
+    protected static Guid? ParseGuidOrDefault(string guidValue)
     {
         if (Guid.TryParse(guidValue, out Guid result))
         {
@@ -85,19 +87,30 @@ public class BasicMapper : IItemMapper
         return null;
     }
 
-    protected string AdjustPriceIfRequired(string rawPrice)
+    protected static string AdjustPriceIfRequired(string rawPrice)
     {
+        ArgumentNullException.ThrowIfNull(rawPrice);
+
         return rawPrice.Replace(',', '.');
     }
 
-    protected string AdjustNameIfRequired(string itemName)
+    protected static string AdjustNameIfRequired(string itemName)
     {
+        ArgumentNullException.ThrowIfNull(itemName);
+
         return itemName.Replace("'", " ");
     }
 
-    protected TValue? TryGetValueOrDefault<TValue>(
+    // TODO: move to extension method
+    protected static TValue? TryGetValueOrDefault<TValue>(
         Dictionary<ItemFields, string> dict,
         ItemFields field,
         Func<string, TValue?> affect
-    ) => dict.ContainsKey(field) ? affect(dict[field]) : default(TValue);
+    )
+    {
+        ArgumentNullException.ThrowIfNull(affect);
+        ArgumentNullException.ThrowIfNull(dict);
+
+        return dict.ContainsKey(field) ? affect(dict[field]) : default(TValue);
+    }
 }

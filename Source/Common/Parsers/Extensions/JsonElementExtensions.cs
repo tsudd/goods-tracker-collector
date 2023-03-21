@@ -1,3 +1,5 @@
+namespace GoodsTracker.DataCollector.Common.Parsers.Extensions;
+
 using System.Text.Json;
 
 internal static class JsonElementExtensions

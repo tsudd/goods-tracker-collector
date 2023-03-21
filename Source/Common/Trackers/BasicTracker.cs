@@ -1,8 +1,6 @@
-using System.Text.Json;
 using GoodsTracker.DataCollector.Common.Configuration;
 using GoodsTracker.DataCollector.Common.Scrapers.Abstractions;
 using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using GoodsTracker.DataCollector.Models;
 using GoodsTracker.DataCollector.Common.Factories.Abstractions;

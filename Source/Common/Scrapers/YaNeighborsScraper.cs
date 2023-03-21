@@ -121,10 +121,10 @@ public sealed class YaNeighborsScraper : IScraper
     }
 
     private async Task<IEnumerable<ItemModel>> ProcessCategoryPageAsync(
-        (string CategoryLink, string CategoryName) recourse
+        (string CategoryLink, string CategoryName) categoryRecource
     )
     {
-        _driver.Navigate().GoToUrl(new Uri(_config.ShopUrl + recourse.CategoryLink));
+        _driver.Navigate().GoToUrl(new Uri(_config.ShopUrl + categoryRecource.CategoryLink));
         WaitForPageToLoad(By.XPath("//ul[@class='DesktopGoodsList_list']/li/a"));
         var page = GetCurrentHtmlDoc();
         var itemRecourses = new List<string>();
@@ -136,12 +136,14 @@ public sealed class YaNeighborsScraper : IScraper
         {
             LoggerMessage.Define(
                     LoggingLevel.Warning, 0,
-                    $"couldn't parse items from category: {recourse.CategoryLink}")(
+                    $"couldn't parse items from category: {categoryRecource.CategoryLink}")(
                         this._logger, null);
             return parsedItems;
         }
 
-        var results = await Task.WhenAll(itemNodes.Select(itemNode => ProcessItemAsync(itemNode))).ConfigureAwait(false);
+        var results = await Task.WhenAll(
+            itemNodes.Select(itemNode => ProcessItemAsync(itemNode)))
+            .ConfigureAwait(false);
 
         return results.NotNulls();
     }
@@ -159,9 +161,10 @@ public sealed class YaNeighborsScraper : IScraper
                         this._logger, null);
             return null;
         }
+
         try
         {
-            var rawItem = await RequestProductInfoAsync(productGuidMatch.Value).ConfigureAwait(false);
+            var rawItem = await RequestProductInfoAsyncWithMultipleAttempts(productGuidMatch.Value).ConfigureAwait(false);
             var parsedItemFields = _parser.ParseItem(rawItem);
 
             return _mapper.MapItemFields(parsedItemFields);
@@ -180,10 +183,11 @@ public sealed class YaNeighborsScraper : IScraper
                     $"couldn't parse product info from {productLink}: {formatException.Message}")(
                         this._logger, formatException);
         }
+
         return null;
     }
 
-    private async Task<string> RequestProductInfoAsync(string productGuid)
+    private async Task<string> RequestProductInfoAsyncWithMultipleAttempts(string productGuid)
     {
         var productInfoUri = new Uri("https://eda.yandex.by/api/v2/menu/product");
 

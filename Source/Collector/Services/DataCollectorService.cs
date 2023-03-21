@@ -40,8 +40,6 @@ public class DataCollectorService : BackgroundService
             "Starting scraping items.")(
                 _logger, null);
 
-        _appLifeTime.StopApplication();
-
         await _tracker.FetchItemsAsync().ConfigureAwait(false);
 
         LoggerMessage.Define(
@@ -61,10 +59,7 @@ public class DataCollectorService : BackgroundService
                     _logger, ex);
         }
 
-        LoggerMessage.Define(
-            LogLevel.Information, 0,
-            "Clearing fetched data")(
-                _logger, null);
+        _appLifeTime.StopApplication();
     }
 
     public override void Dispose()

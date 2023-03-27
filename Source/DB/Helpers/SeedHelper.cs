@@ -1,4 +1,4 @@
-namespace GoodsTracker.DataCollector.DB.Extensions;
+namespace GoodsTracker.DataCollector.DB.Helpers;
 
 using System.Reflection;
 using System.Text;

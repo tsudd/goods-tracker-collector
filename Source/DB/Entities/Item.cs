@@ -14,7 +14,7 @@ public class Item
     public Guid PublicId { get; set; }
 
     [Required]
-    public string Name1 { get; set; } = string.Empty;
+    public string Name1 { get; set; } = null!;
     public string? Name2 { get; set; }
     public string? Name3 { get; set; }
 
@@ -22,7 +22,7 @@ public class Item
     public Uri? ImageLink { get; set; }
     public double Weight { get; set; }
     public string? WeightUnit { get; set; }
-    public int VendorCode { get; set; }
+    public long VendorCode { get; set; }
     public string? Compound { get; set; }
     public float Protein { get; set; }
     public float Fat { get; set; }
@@ -47,6 +47,8 @@ public class Item
             builder.HasIndex(static x => x.Name1)
                    .HasMethod("gin")
                    .HasOperators("gin_trgm_ops");
+
+            builder.HasIndex(static x => x.VendorId);
         }
     }
 

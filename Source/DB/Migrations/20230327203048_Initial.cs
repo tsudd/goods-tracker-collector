@@ -37,8 +37,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    fetch_start_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    fetch_end_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    fetch_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -77,7 +76,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     image_link = table.Column<string>(type: "text", nullable: true),
                     weight = table.Column<double>(type: "double precision", nullable: false),
                     weight_unit = table.Column<string>(type: "text", nullable: true),
-                    vendor_code = table.Column<int>(type: "integer", nullable: false),
+                    vendor_code = table.Column<long>(type: "bigint", nullable: false),
                     compound = table.Column<string>(type: "text", nullable: true),
                     protein = table.Column<float>(type: "real", nullable: false),
                     fat = table.Column<float>(type: "real", nullable: false),
@@ -175,7 +174,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 {
                     { 1, "BYN", "https://sosedi.by/upload/medialibrary/418/4181b7febf77b139d9936faf5b5095ce.png", "Соседи", "Sosedi", "Sosedi Inc.", 0, "https://sosedi.by/" },
                     { 3, "BYN", "https://api.static.edostavka.by/media/63c953ca1fae9_ed-logo.svg?id=12369", "Евроопт", "Evroopt", "Edostavka", 0, "https://edostavka.by/" },
-                    { 4, "BYN", "https://green-dostavka.by/images/logo.svg", "Green", "Green", "Green", 0, "https://green-dostavka.by/" }
+                    { 4, "BYN", "https://green-dostavka.by/images/logo.svg", "Green", "Green", "Green", 0, "https://green-dostavka.by/" },
+                    { 5, "BYN", "https://bel-market.by/bitrix/templates/info_light_blue/img/svg/logo.svg", "Белмаркет", "Belmarket", "BELMARKET", 0, "https://bel-market.by/" },
+                    { 6, "BYN", "https://gippo-market.by/local/templates/html/images/i-gippo.svg", "Гиппо", "Gippo-market", "Gippo", 0, "https://gippo-market.by/" }
                 });
 
             migrationBuilder.CreateIndex(

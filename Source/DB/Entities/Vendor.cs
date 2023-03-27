@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 using GoodsTracker.DataCollector.DB.Entities.Enumerators;
-using GoodsTracker.DataCollector.DB.Extensions;
+using GoodsTracker.DataCollector.DB.Helpers;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

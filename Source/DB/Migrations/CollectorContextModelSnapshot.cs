@@ -148,8 +148,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("public_id");
 
-                    b.Property<int>("VendorCode")
-                        .HasColumnType("integer")
+                    b.Property<long>("VendorCode")
+                        .HasColumnType("bigint")
                         .HasColumnName("vendor_code");
 
                     b.Property<int>("VendorId")
@@ -221,13 +221,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("FetchEndDate")
+                    b.Property<DateTime>("FetchDate")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("fetch_end_date");
-
-                    b.Property<DateTime>("FetchStartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("fetch_start_date");
+                        .HasColumnName("fetch_date");
 
                     b.HasKey("Id")
                         .HasName("pk_streams");
@@ -311,6 +307,28 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                             Name3 = "Green",
                             Type = 0,
                             Website = "https://green-dostavka.by/"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Land = "BYN",
+                            LogoImageLink = "https://bel-market.by/bitrix/templates/info_light_blue/img/svg/logo.svg",
+                            Name1 = "Белмаркет",
+                            Name2 = "Belmarket",
+                            Name3 = "BELMARKET",
+                            Type = 0,
+                            Website = "https://bel-market.by/"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Land = "BYN",
+                            LogoImageLink = "https://gippo-market.by/local/templates/html/images/i-gippo.svg",
+                            Name1 = "Гиппо",
+                            Name2 = "Gippo-market",
+                            Name3 = "Gippo",
+                            Type = 0,
+                            Website = "https://gippo-market.by/"
                         });
                 });
 

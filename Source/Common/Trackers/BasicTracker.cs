@@ -21,6 +21,9 @@ public class BasicTracker : IItemTracker
         IDataCollectorFactory factory
     )
     {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(factory);
+
         _config = config.Value;
         _logger = logger;
         _shopItems = new Dictionary<string, List<ItemModel>>();
@@ -85,7 +88,7 @@ public class BasicTracker : IItemTracker
         {
             return _shopItems[shopId];
         }
-        catch (Exception ex)
+        catch (KeyNotFoundException ex)
         {
             LoggerMessage.Define(
                     LogLevel.Warning, 0,

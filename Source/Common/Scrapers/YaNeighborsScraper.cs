@@ -12,19 +12,18 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System.Text.RegularExpressions;
-using GoodsTracker.DataCollector.Common.Parsers.Exceptions;
-using GoodsTracker.DataCollector.Common.Scrapers.Extensions;
 
 using LoggingLevel = Microsoft.Extensions.Logging.LogLevel;
+using FluentResults;
 
 namespace GoodsTracker.DataCollector.Common.Scrapers;
 
 public sealed class YaNeighborsScraper : IScraper
 {
     private const int requestAttemptsMaxAmount = 3;
-    private const int delayBetweenRequests = 400;
+    private const int delayBetweenRequests = 600;
     private readonly static Regex productPublicIdPattern = new Regex(
-        @"[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+        @"([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\?placeSlug=(.*)$",
         RegexOptions.Compiled
     );
 
@@ -141,53 +140,45 @@ public sealed class YaNeighborsScraper : IScraper
             return parsedItems;
         }
 
-        var results = await Task.WhenAll(
+        var results = (await Task.WhenAll(
             itemNodes.Select(itemNode => ProcessItemAsync(itemNode)))
-            .ConfigureAwait(false);
+            .ConfigureAwait(false)).Merge();
 
-        return results.NotNulls();
+        LoggerMessage.Define(
+                    LoggingLevel.Error, 0, string.Join(",", results.Reasons.Select(r => r.Message)))(
+                        this._logger, null);
+        return results.Value;
     }
 
-    private async Task<ItemModel?> ProcessItemAsync(HtmlNode itemNode)
+    private async Task<Result<ItemModel>> ProcessItemAsync(HtmlNode itemNode)
     {
         var productLink = itemNode.Attributes["href"].Value;
         var productGuidMatch = productPublicIdPattern.Match(productLink);
 
         if (!productGuidMatch.Success)
         {
-            LoggerMessage.Define(
-                    LoggingLevel.Error, 0,
-                    $"couldn't match product GUID to fetch info: {productLink}")(
-                        this._logger, null);
-            return null;
+            return Result.Fail($"couldn't match product recource to fetch info: {productLink}");
         }
 
-        try
-        {
-            var rawItem = await RequestProductInfoAsyncWithMultipleAttempts(productGuidMatch.Value).ConfigureAwait(false);
-            var parsedItemFields = _parser.ParseItem(rawItem);
+        var requestProductResult = await RequestProductInfoAsyncWithMultipleAttempts(
+            productGuidMatch.Groups[1].Value,
+            productGuidMatch.Groups[2].Value).ConfigureAwait(false);
 
-            return _mapper.MapItemFields(parsedItemFields);
-        }
-        catch (HttpRequestException ex)
+        if (requestProductResult.IsFailed)
         {
-            LoggerMessage.Define(
-                    LoggingLevel.Error, 0,
-                    $"couldn't fetch product from {productLink}: {ex.Message}")(
-                        this._logger, ex);
+            return Result.Fail($"couldn't fetch product from {productLink}: {requestProductResult.Errors}");
         }
-        catch (InvalidItemFormatException formatException)
+        var parseItemResult = _parser.ParseItem(requestProductResult.Value);
+
+        if (parseItemResult.IsFailed)
         {
-            LoggerMessage.Define(
-                    LoggingLevel.Error, 0,
-                    $"couldn't parse product info from {productLink}: {formatException.Message}")(
-                        this._logger, formatException);
+            return Result.Fail($"couldn't fetch product from {productLink}: {parseItemResult.Errors}");
         }
 
-        return null;
+        return _mapper.MapItemFields(parseItemResult.Value);
     }
 
-    private async Task<string> RequestProductInfoAsyncWithMultipleAttempts(string productGuid)
+    private async Task<Result<string>> RequestProductInfoAsyncWithMultipleAttempts(string productGuid, string placeSlug)
     {
         var productInfoUri = new Uri("https://eda.yandex.by/api/v2/menu/product");
 
@@ -200,7 +191,7 @@ public sealed class YaNeighborsScraper : IScraper
                 return await _requester.PostAsync(
                     productInfoUri,
                     _config.Headers,
-                    GenerateContentBodyForProductFetch(productGuid))
+                    GenerateContentBodyForProductFetch(productGuid, placeSlug))
                     .ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
@@ -212,11 +203,12 @@ public sealed class YaNeighborsScraper : IScraper
                 await Task.Delay(delayBetweenRequests).ConfigureAwait(false);
             }
         } while (attempts <= requestAttemptsMaxAmount);
-        throw new HttpRequestException("couldn't fetch product info after several attempts: " + productGuid);
+
+        return Result.Fail("couldn't fetch product info after several attempts: " + productGuid);
     }
 
-    private static string GenerateContentBodyForProductFetch(string productId) => "{"
-            + "\"place_slug\":\"sosedi_kaodz\","
+    private static string GenerateContentBodyForProductFetch(string productId, string placeSlug) => "{"
+            + $"\"place_slug\":\"{placeSlug}\","
             + $"\"product_public_id\":\"{productId}\","
             + "\"with_categories\":true"
             + "}";

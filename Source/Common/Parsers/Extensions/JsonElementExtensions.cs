@@ -37,7 +37,7 @@ internal static class JsonElementExtensions
                 propertyValue = valueGetter(element);
                 return true;
             }
-            catch (InvalidOperationException) { }
+            catch (FormatException) { }
         }
         return false;
     }

@@ -9,7 +9,7 @@ public class BasicMapper : IItemMapper
     public ItemModel MapItemFields(Dictionary<ItemFields, string> fields)
     {
         Func<string, string?> noAffect = static _ => _;
-        return new ItemModel()
+        return new ItemModel
         {
             Name1 = TryGetValueOrDefault(fields, ItemFields.Name1, AdjustNameIfRequired),
             Name2 = TryGetValueOrDefault(fields, ItemFields.Name2, noAffect),
@@ -112,5 +112,10 @@ public class BasicMapper : IItemMapper
         ArgumentNullException.ThrowIfNull(dict);
 
         return dict.ContainsKey(field) ? affect(dict[field]) : default(TValue);
+    }
+
+    public ItemModel MapItemFields(Dictionary<ItemFields, object> fields)
+    {
+        throw new NotImplementedException();
     }
 }

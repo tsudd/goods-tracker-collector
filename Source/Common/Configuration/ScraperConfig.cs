@@ -11,7 +11,8 @@ public sealed class ScraperConfig
     public string ShopUrl { get; init; } = String.Empty;
     public string ShopStartRecource { get; init; } = String.Empty;
     public string? ShopApi { get; init; }
-    public Dictionary<string, string> HTMLSections { get; init; } =
+    public Dictionary<string, string> HTMLSections { get; init; } = new Dictionary<string, string>();
+    public Dictionary<string, string> Metadata { get; init; } =
         new Dictionary<string, string>();
     public string ItemMapper { get; init; } = String.Empty;
 }

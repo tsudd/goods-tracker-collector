@@ -7,4 +7,5 @@ public interface IItemMapper
 {
     const string CategoriesSeparator = "&";
     ItemModel MapItemFields(Dictionary<ItemFields, string> fields);
+    ItemModel MapItemFields(Dictionary<ItemFields, object> fields);
 }

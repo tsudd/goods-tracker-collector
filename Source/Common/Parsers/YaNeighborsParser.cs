@@ -4,8 +4,8 @@ using GoodsTracker.DataCollector.Common.Parsers.Abstractions;
 using Microsoft.Extensions.Logging;
 using GoodsTracker.DataCollector.Models.Constants;
 using System.Text.Json;
-using GoodsTracker.DataCollector.Common.Parsers.Exceptions;
 using GoodsTracker.DataCollector.Common.Parsers.Extensions;
+using FluentResults;
 
 namespace GoodsTracker.DataCollector.Common.Parsers;
 
@@ -27,11 +27,16 @@ public sealed class YaNeighborsParser : IItemParser
         _logger = logger;
     }
 
-    // TODO: get rid of cyclomatic complexity warning
-    public Dictionary<ItemFields, string> ParseItem(string rawItem)
+    public Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
     {
-        using var productDocument = TryParseJsonDocument(rawItem);
-        var root = productDocument.RootElement;
+        var getDocumentResult = TryParseJsonDocument(rawItem);
+        if (getDocumentResult.IsFailed)
+        {
+            return getDocumentResult.ToResult();
+        }
+
+        using var productDoc = getDocumentResult.Value;
+        var root = productDoc.RootElement;
 
         var fields = new Dictionary<ItemFields, string>();
 
@@ -64,7 +69,7 @@ public sealed class YaNeighborsParser : IItemParser
         }
         else
         {
-            throw new InvalidItemFormatException("couldn't parse item base info: 'name'");
+            return Result.Fail("couldn't parse item base info: 'name'");
         }
 
         if (itemNode.TryGetPropertyValue("decimalPrice", out string price))
@@ -73,7 +78,7 @@ public sealed class YaNeighborsParser : IItemParser
         }
         else
         {
-            throw new InvalidItemFormatException("couldn't parse item base info: 'price'");
+            return Result.Fail("couldn't parse item base info: 'price'");
         }
 
         if (itemNode.TryGetPropertyValue("decimalPromoPrice", out string cutPrice))
@@ -86,7 +91,7 @@ public sealed class YaNeighborsParser : IItemParser
             fields.AddItemAdult(isAdult.ToString());
         }
 
-        if (itemNode.TryGetPropertyValue("id", static o => o.GetInt32(), out int vendorCode))
+        if (itemNode.TryGetPropertyValue("id", static o => o.GetInt64(), out long vendorCode))
         {
             // TODO: try dictionary with objects, instead of string
             fields.AddItemVendorCode(vendorCode.ToString());
@@ -121,22 +126,22 @@ public sealed class YaNeighborsParser : IItemParser
             TryReadItemCategories(categoriesElement, ref fields);
         }
 
-        return fields;
+        return Result.Ok(fields);
     }
 
-    private JsonDocument TryParseJsonDocument(string rawJson)
+    private static Result<JsonDocument> TryParseJsonDocument(string rawJson)
     {
         try
         {
-            return JsonDocument.Parse(rawJson);
+            return Result.Ok(JsonDocument.Parse(rawJson));
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            throw new InvalidItemFormatException("couldn't parse item's JSON");
+            return Result.Fail(new Error("couldn't parse item's JSON").CausedBy(ex));
         }
     }
 
-    private void TryReadItemDetails(JsonElement detailsElement, ref Dictionary<ItemFields, string> fieldsDict)
+    private static void TryReadItemDetails(JsonElement detailsElement, ref Dictionary<ItemFields, string> fieldsDict)
     {
         foreach (var detail in detailsElement.EnumerateArray())
         {
@@ -183,7 +188,7 @@ public sealed class YaNeighborsParser : IItemParser
         }
     }
 
-    private void TryReadItemCategories(JsonElement categoriesElement, ref Dictionary<ItemFields, string> fieldsDict)
+    private static void TryReadItemCategories(JsonElement categoriesElement, ref Dictionary<ItemFields, string> fieldsDict)
     {
         var categories = new List<string>();
         foreach (var category in categoriesElement.EnumerateArray())

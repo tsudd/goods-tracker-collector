@@ -37,7 +37,7 @@ public class DataCollectorService : BackgroundService
     {
         LoggerMessage.Define(
             LogLevel.Information, 0,
-            "Starting scraping items.")(
+            "Starting scraping of items.")(
                 _logger, null);
 
         await _tracker.FetchItemsAsync().ConfigureAwait(false);
@@ -64,7 +64,16 @@ public class DataCollectorService : BackgroundService
 
     public override void Dispose()
     {
-        _tracker.ClearData();
-        base.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _tracker.ClearData();
+            base.Dispose();
+        }
     }
 }

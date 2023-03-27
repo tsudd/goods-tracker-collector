@@ -11,7 +11,7 @@ namespace GoodsTracker.DataCollector.Common.Trackers;
 public class BasicTracker : IItemTracker
 {
     private List<IScraper> _scrapers = new List<IScraper>();
-    private Dictionary<string, List<ItemModel>> _shopItems;
+    private Dictionary<int, IList<ItemModel>> _shopItems;
     private readonly ILogger<BasicTracker> _logger;
     private readonly TrackerConfig _config;
 
@@ -26,7 +26,7 @@ public class BasicTracker : IItemTracker
 
         _config = config.Value;
         _logger = logger;
-        _shopItems = new Dictionary<string, List<ItemModel>>();
+        _shopItems = new Dictionary<int, IList<ItemModel>>();
         foreach (var conf in _config.ScrapersConfigurations)
         {
             _scrapers.Add(
@@ -35,7 +35,6 @@ public class BasicTracker : IItemTracker
                     factory.CreateParser(conf.ParserName)
                 )
             );
-            _shopItems.Add(conf.ShopID, new List<ItemModel>());
         }
     }
 
@@ -60,7 +59,7 @@ public class BasicTracker : IItemTracker
 
             try
             {
-                _shopItems[conf.ShopID].AddRange(await scraper.GetItemsAsync().ConfigureAwait(false));
+                _shopItems.Add(conf.ShopID, (await scraper.GetItemsAsync().ConfigureAwait(false)));
 
                 LoggerMessage.Define(
                     LogLevel.Information, 0,
@@ -82,19 +81,16 @@ public class BasicTracker : IItemTracker
                         this._logger, ex);
     }
 
-    public IEnumerable<ItemModel>? GetShopItems(string shopId)
+    public IEnumerable<ItemModel> GetShopItems(int shopId)
     {
-        try
+        if (_shopItems.ContainsKey(shopId))
         {
             return _shopItems[shopId];
         }
-        catch (KeyNotFoundException ex)
-        {
-            LoggerMessage.Define(
-                    LogLevel.Warning, 0,
-                    $"'{_config.TrackerName}' couldn't return shop items: {ex.Message}")(
-                        this._logger, ex);
-            return null;
-        }
+        LoggerMessage.Define(
+                LogLevel.Warning, 0,
+                $"'{_config.TrackerName}' couldn't return shop items: nothing has been tracked")(
+                    this._logger, null);
+        return Array.Empty<ItemModel>();
     }
 }

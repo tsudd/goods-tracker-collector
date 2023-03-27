@@ -5,6 +5,6 @@ namespace GoodsTracker.DataCollector.Common.Scrapers.Abstractions;
 
 public interface IScraper
 {
-    Task<IEnumerable<ItemModel>> GetItemsAsync();
+    Task<IList<ItemModel>> GetItemsAsync();
     ScraperConfig GetConfig();
 }

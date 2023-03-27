@@ -34,9 +34,6 @@ public class DataCollectorFactory : IDataCollectorFactory
         var providedConfig = options.Value;
         return providedConfig.AdapterName switch
         {
-            nameof(HanaAdapter) => new HanaAdapter(
-                    providedConfig,
-                    _loggerFactory.CreateLogger<HanaAdapter>()),
             nameof(CsvAdapter) => new CsvAdapter(
                     providedConfig,
                     _loggerFactory.CreateLogger<CsvAdapter>()),

@@ -19,7 +19,7 @@ public class CsvAdapter : IDataAdapter
         _logger = logger;
     }
 
-    public void SaveItems(IItemTracker tracker, IEnumerable<string> shopIds)
+    public void SaveItems(IItemTracker tracker, IEnumerable<int> shopIds)
     {
         _logger.LogInformation("Writing items into CSV files...");
         foreach (var shop in shopIds)
@@ -51,7 +51,7 @@ public class CsvAdapter : IDataAdapter
         }
     }
 
-    private string BuildCSVFileName(string shop, string timeLabel = "")
+    private string BuildCSVFileName(int shop, string timeLabel = "")
     {
         var timestamp = timeLabel;
         if (timestamp.Length == 0)

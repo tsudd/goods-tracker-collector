@@ -72,7 +72,7 @@ public sealed class YaNeighborsScraper : IScraper
         return _config;
     }
 
-    public async Task<IEnumerable<ItemModel>> GetItemsAsync()
+    public async Task<IList<ItemModel>> GetItemsAsync()
     {
         var categories = GetCategoryLinks();
         var items = new List<ItemModel>();

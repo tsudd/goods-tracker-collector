@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodsTracker.DataCollector.DB.Migrations
 {
     [DbContext(typeof(CollectorContext))]
-    [Migration("20230327203048_Initial")]
+    [Migration("20230329210710_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -49,11 +49,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
             modelBuilder.Entity("GoodsTracker.DataCollector.DB.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -106,7 +103,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("adult");
 
-                    b.Property<float>("Carbo")
+                    b.Property<float?>("Carbo")
                         .HasColumnType("real")
                         .HasColumnName("carbo");
 
@@ -114,7 +111,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("text")
                         .HasColumnName("compound");
 
-                    b.Property<float>("Fat")
+                    b.Property<string>("Country")
+                        .HasColumnType("text")
+                        .HasColumnName("country");
+
+                    b.Property<float?>("Fat")
                         .HasColumnType("real")
                         .HasColumnName("fat");
 
@@ -139,19 +140,23 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name3");
 
-                    b.Property<float>("Portion")
+                    b.Property<float?>("Portion")
                         .HasColumnType("real")
                         .HasColumnName("portion");
 
-                    b.Property<float>("Protein")
+                    b.Property<string>("Producer")
+                        .HasColumnType("text")
+                        .HasColumnName("producer");
+
+                    b.Property<float?>("Protein")
                         .HasColumnType("real")
                         .HasColumnName("protein");
 
-                    b.Property<Guid>("PublicId")
+                    b.Property<Guid?>("PublicId")
                         .HasColumnType("uuid")
                         .HasColumnName("public_id");
 
-                    b.Property<long>("VendorCode")
+                    b.Property<long?>("VendorCode")
                         .HasColumnType("bigint")
                         .HasColumnName("vendor_code");
 
@@ -159,7 +164,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("vendor_id");
 
-                    b.Property<double>("Weight")
+                    b.Property<double?>("Weight")
                         .HasColumnType("double precision")
                         .HasColumnName("weight");
 
@@ -192,7 +197,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("stream_id");
 
-                    b.Property<decimal>("CutPrice")
+                    b.Property<decimal?>("CutPrice")
                         .HasPrecision(9, 2)
                         .HasColumnType("numeric(9,2)")
                         .HasColumnName("cut_price");

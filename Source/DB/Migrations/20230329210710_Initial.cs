@@ -22,8 +22,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 name: "categories",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -69,19 +68,21 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    public_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    public_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name1 = table.Column<string>(type: "text", nullable: false),
                     name2 = table.Column<string>(type: "text", nullable: true),
                     name3 = table.Column<string>(type: "text", nullable: true),
                     image_link = table.Column<string>(type: "text", nullable: true),
-                    weight = table.Column<double>(type: "double precision", nullable: false),
+                    weight = table.Column<double>(type: "double precision", nullable: true),
                     weight_unit = table.Column<string>(type: "text", nullable: true),
-                    vendor_code = table.Column<long>(type: "bigint", nullable: false),
+                    vendor_code = table.Column<long>(type: "bigint", nullable: true),
                     compound = table.Column<string>(type: "text", nullable: true),
-                    protein = table.Column<float>(type: "real", nullable: false),
-                    fat = table.Column<float>(type: "real", nullable: false),
-                    carbo = table.Column<float>(type: "real", nullable: false),
-                    portion = table.Column<float>(type: "real", nullable: false),
+                    protein = table.Column<float>(type: "real", nullable: true),
+                    fat = table.Column<float>(type: "real", nullable: true),
+                    carbo = table.Column<float>(type: "real", nullable: true),
+                    portion = table.Column<float>(type: "real", nullable: true),
+                    country = table.Column<string>(type: "text", nullable: true),
+                    producer = table.Column<string>(type: "text", nullable: true),
                     adult = table.Column<bool>(type: "boolean", nullable: false),
                     vendor_id = table.Column<int>(type: "integer", nullable: false),
                     metadata = table.Column<string>(type: "text", nullable: true)
@@ -147,7 +148,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     item_id = table.Column<int>(type: "integer", nullable: false),
                     stream_id = table.Column<int>(type: "integer", nullable: false),
                     price = table.Column<decimal>(type: "numeric(9,2)", precision: 9, scale: 2, nullable: false),
-                    cut_price = table.Column<decimal>(type: "numeric(9,2)", precision: 9, scale: 2, nullable: false),
+                    cut_price = table.Column<decimal>(type: "numeric(9,2)", precision: 9, scale: 2, nullable: true),
                     on_discount = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>

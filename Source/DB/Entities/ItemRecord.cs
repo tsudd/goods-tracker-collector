@@ -13,7 +13,7 @@ public class ItemRecord
 
     [Required]
     public decimal Price { get; set; }
-    public decimal CutPrice { get; set; }
+    public decimal? CutPrice { get; set; }
     public bool OnDiscount { get; set; } = false;
 
     // FK

@@ -14,11 +14,11 @@ public class BasicMapper : IItemMapper
             Name1 = TryGetValueOrDefault(fields, ItemFields.Name1, AdjustNameIfRequired),
             Name2 = TryGetValueOrDefault(fields, ItemFields.Name2, noAffect),
             Name3 = TryGetValueOrDefault(fields, ItemFields.Name3, noAffect),
-            Price = TryGetValueOrDefault(fields, ItemFields.Price, AdjustPriceIfRequired),
-            Discount = TryGetValueOrDefault(fields, ItemFields.Discount, AdjustPriceIfRequired),
+            Price = TryGetValueOrDefault(fields, ItemFields.Price, ParseDecimalOrDefault),
+            Discount = TryGetValueOrDefault(fields, ItemFields.Discount, ParseDecimalOrDefault),
             Country = TryGetValueOrDefault(fields, ItemFields.Country, noAffect),
             Producer = TryGetValueOrDefault(fields, ItemFields.Producer, noAffect),
-            VendorCode = TryGetValueOrDefault(fields, ItemFields.VendorCode, ParseIntOrDefault),
+            VendorCode = TryGetValueOrDefault(fields, ItemFields.VendorCode, ParseLongOrDefault),
             Weight = TryGetValueOrDefault(fields, ItemFields.Weight, ParseFloatOrDefault),
             WeightUnit = TryGetValueOrDefault(fields, ItemFields.WeightUnit, noAffect),
             Compound = TryGetValueOrDefault(fields, ItemFields.Compound, noAffect),
@@ -30,16 +30,16 @@ public class BasicMapper : IItemMapper
                 fields,
                 ItemFields.Categories,
                 ParseCategoriesOrEmpty
-            ),
+            ) ?? new List<string>(),
             Link = TryGetValueOrDefault(fields, ItemFields.ImageLink, noAffect),
             Adult = TryGetValueOrDefault(fields, ItemFields.Adult, ParseBooleanOrDefault),
             Guid = TryGetValueOrDefault(fields, ItemFields.Guid, ParseGuidOrDefault),
         };
     }
 
-    protected static int? ParseIntOrDefault(string numberValue)
+    protected static long? ParseLongOrDefault(string numberValue)
     {
-        if (Int32.TryParse(numberValue, out int result))
+        if (Int64.TryParse(numberValue, out long result))
         {
             return result;
         }
@@ -54,6 +54,22 @@ public class BasicMapper : IItemMapper
                 System.Globalization.NumberStyles.Float,
                 System.Globalization.NumberFormatInfo.InvariantInfo,
                 out float result
+            )
+        )
+        {
+            return result;
+        }
+        return null;
+    }
+
+    protected static decimal? ParseDecimalOrDefault(string numberValue)
+    {
+        if (
+            decimal.TryParse(
+                numberValue,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.NumberFormatInfo.InvariantInfo,
+                out decimal result
             )
         )
         {

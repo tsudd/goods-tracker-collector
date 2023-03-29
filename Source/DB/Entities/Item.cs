@@ -11,7 +11,7 @@ public class Item
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    public Guid PublicId { get; set; }
+    public Guid? PublicId { get; set; }
 
     [Required]
     public string Name1 { get; set; } = null!;
@@ -20,14 +20,16 @@ public class Item
 
     [Column(TypeName = "text")]
     public Uri? ImageLink { get; set; }
-    public double Weight { get; set; }
+    public double? Weight { get; set; }
     public string? WeightUnit { get; set; }
-    public long VendorCode { get; set; }
+    public long? VendorCode { get; set; }
     public string? Compound { get; set; }
-    public float Protein { get; set; }
-    public float Fat { get; set; }
-    public float Carbo { get; set; }
-    public float Portion { get; set; }
+    public float? Protein { get; set; }
+    public float? Fat { get; set; }
+    public float? Carbo { get; set; }
+    public float? Portion { get; set; }
+    public string? Country { get; set; }
+    public string? Producer { get; set; }
     public bool Adult { get; set; }
     public int VendorId { get; set; }
 

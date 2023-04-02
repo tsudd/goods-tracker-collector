@@ -17,6 +17,7 @@ public class CollectorContext : DbContext
     public DbSet<ItemRecord> ItemRecords { get; set; } = null!;
     public DbSet<FavoriteItem> FavoriteItems { get; set; } = null!;
     public DbSet<Producer> Producers { get; set; } = null!;
+    public DbSet<ItemError> ItemErrors { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -26,6 +27,7 @@ public class CollectorContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasPostgresExtension("btree_gin");
         modelBuilder.HasPostgresExtension("pg_trgm");

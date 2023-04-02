@@ -28,8 +28,7 @@ public class Item
     public float? Fat { get; set; }
     public float? Carbo { get; set; }
     public float? Portion { get; set; }
-    public string? Country { get; set; }
-    public string? Producer { get; set; }
+    public uint? ProducerId { get; set; }
     public bool Adult { get; set; }
     public int VendorId { get; set; }
 
@@ -39,6 +38,8 @@ public class Item
     // FK
     [Required]
     public Vendor Vendor { get; set; } = null!;
+
+    public Producer? Producer { get; set; }
 
     public ICollection<Category> Categories { get; set; } = new List<Category>();
 

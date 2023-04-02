@@ -16,10 +16,12 @@ public class CollectorContext : DbContext
     public DbSet<Item> Items { get; set; } = null!;
     public DbSet<ItemRecord> ItemRecords { get; set; } = null!;
     public DbSet<FavoriteItem> FavoriteItems { get; set; } = null!;
+    public DbSet<Producer> Producers { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         _ = optionsBuilder.UseSnakeCaseNamingConvention();
+        _ = optionsBuilder.UseNpgsql("Server=127.0.0.1;Port=5432;Database=trackerDB;UID=sa;PWD=sa");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -22,12 +22,26 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 name: "categories",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false),
+                    id = table.Column<long>(type: "bigint", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_categories", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "producers",
+                columns: table => new
+                {
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    country = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_producers", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -81,8 +95,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     fat = table.Column<float>(type: "real", nullable: true),
                     carbo = table.Column<float>(type: "real", nullable: true),
                     portion = table.Column<float>(type: "real", nullable: true),
-                    country = table.Column<string>(type: "text", nullable: true),
-                    producer = table.Column<string>(type: "text", nullable: true),
+                    producer_id = table.Column<long>(type: "bigint", nullable: true),
                     adult = table.Column<bool>(type: "boolean", nullable: false),
                     vendor_id = table.Column<int>(type: "integer", nullable: false),
                     metadata = table.Column<string>(type: "text", nullable: true)
@@ -90,6 +103,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_items", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_items_producers_producer_id",
+                        column: x => x.producer_id,
+                        principalTable: "producers",
+                        principalColumn: "id");
                     table.ForeignKey(
                         name: "fk_items_vendors_vendor_id",
                         column: x => x.vendor_id,
@@ -102,7 +120,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 name: "category_item",
                 columns: table => new
                 {
-                    categories_id = table.Column<int>(type: "integer", nullable: false),
+                    categories_id = table.Column<long>(type: "bigint", nullable: false),
                     items_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -205,6 +223,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_items_producer_id",
+                table: "items",
+                column: "producer_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_items_vendor_id",
                 table: "items",
                 column: "vendor_id");
@@ -230,6 +253,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
             migrationBuilder.DropTable(
                 name: "streams");
+
+            migrationBuilder.DropTable(
+                name: "producers");
 
             migrationBuilder.DropTable(
                 name: "vendors");

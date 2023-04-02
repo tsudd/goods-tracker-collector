@@ -26,8 +26,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
             modelBuilder.Entity("CategoryItem", b =>
                 {
-                    b.Property<int>("CategoriesId")
-                        .HasColumnType("integer")
+                    b.Property<long>("CategoriesId")
+                        .HasColumnType("bigint")
                         .HasColumnName("categories_id");
 
                     b.Property<int>("ItemsId")
@@ -45,8 +45,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
             modelBuilder.Entity("GoodsTracker.DataCollector.DB.Entities.Category", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer")
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
 
                     b.Property<string>("Name")
@@ -108,10 +108,6 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("text")
                         .HasColumnName("compound");
 
-                    b.Property<string>("Country")
-                        .HasColumnType("text")
-                        .HasColumnName("country");
-
                     b.Property<float?>("Fat")
                         .HasColumnType("real")
                         .HasColumnName("fat");
@@ -141,9 +137,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("real")
                         .HasColumnName("portion");
 
-                    b.Property<string>("Producer")
-                        .HasColumnType("text")
-                        .HasColumnName("producer");
+                    b.Property<long?>("ProducerId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("producer_id");
 
                     b.Property<float?>("Protein")
                         .HasColumnType("real")
@@ -177,6 +173,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name1"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name1"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("ProducerId")
+                        .HasDatabaseName("ix_items_producer_id");
 
                     b.HasIndex("VendorId")
                         .HasDatabaseName("ix_items_vendor_id");
@@ -215,6 +214,30 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasDatabaseName("ix_item_records_stream_id");
 
                     b.ToTable("item_records", (string)null);
+                });
+
+            modelBuilder.Entity("GoodsTracker.DataCollector.DB.Entities.Producer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text")
+                        .HasColumnName("country");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_producers");
+
+                    b.ToTable("producers", (string)null);
                 });
 
             modelBuilder.Entity("GoodsTracker.DataCollector.DB.Entities.Stream", b =>
@@ -368,12 +391,19 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
             modelBuilder.Entity("GoodsTracker.DataCollector.DB.Entities.Item", b =>
                 {
+                    b.HasOne("GoodsTracker.DataCollector.DB.Entities.Producer", "Producer")
+                        .WithMany()
+                        .HasForeignKey("ProducerId")
+                        .HasConstraintName("fk_items_producers_producer_id");
+
                     b.HasOne("GoodsTracker.DataCollector.DB.Entities.Vendor", "Vendor")
                         .WithMany()
                         .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_items_vendors_vendor_id");
+
+                    b.Navigation("Producer");
 
                     b.Navigation("Vendor");
                 });

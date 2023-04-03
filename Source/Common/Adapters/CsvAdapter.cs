@@ -8,10 +8,10 @@ using GoodsTracker.DataCollector.Common.Adapters.Abstractions;
 
 namespace GoodsTracker.DataCollector.Common.Adapters;
 
-public class CsvAdapter : IDataAdapter
+internal class CsvAdapter : IDataAdapter
 {
-    private ILogger _logger;
-    private AdapterConfig _config;
+    private readonly ILogger _logger;
+    private readonly AdapterConfig _config;
 
     public CsvAdapter(AdapterConfig config, ILogger<CsvAdapter> logger)
     {
@@ -49,6 +49,12 @@ public class CsvAdapter : IDataAdapter
                 _logger.LogWarning($"Couldn't write shop '{shop}' items to a CSV: {ex.Message}");
             }
         }
+    }
+
+    public Task SaveItemsAsync(IItemTracker tracker, IEnumerable<int> shopIds)
+    {
+        this.SaveItems(tracker, shopIds);
+        return Task.CompletedTask;
     }
 
     private string BuildCSVFileName(int shop, string timeLabel = "")

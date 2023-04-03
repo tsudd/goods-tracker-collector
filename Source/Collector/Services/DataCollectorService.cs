@@ -49,7 +49,7 @@ public class DataCollectorService : BackgroundService
 
         try
         {
-            _dataAdapter.SaveItems(_tracker, _options.ShopIds);
+            await _dataAdapter.SaveItemsAsync(_tracker, _options.ShopIds).ConfigureAwait(false);
         }
         catch (ApplicationException ex)
         {
@@ -66,6 +66,7 @@ public class DataCollectorService : BackgroundService
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+        base.Dispose();
     }
 
     public virtual void Dispose(bool disposing)
@@ -73,7 +74,6 @@ public class DataCollectorService : BackgroundService
         if (disposing)
         {
             _tracker.ClearData();
-            base.Dispose();
         }
     }
 }

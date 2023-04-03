@@ -7,7 +7,9 @@ using GoodsTracker.DataCollector.Common.Configuration;
 using GoodsTracker.DataCollector.Common.Factories;
 using GoodsTracker.DataCollector.Common.Factories.Abstractions;
 using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
+using GoodsTracker.DataCollector.DB.Context;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -15,6 +17,7 @@ public static class DataCollectorServices
 {
     public static void AddCollectorServices(this IServiceCollection services)
     {
+        services.AddDbContextFactory<CollectorContext>();
         services.AddSingleton<IDataCollectorFactory, DataCollectorFactory>();
 
         services.AddSingleton<IItemTracker>((serviceProvider) =>

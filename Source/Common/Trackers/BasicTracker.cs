@@ -81,7 +81,7 @@ public class BasicTracker : IItemTracker
                         this._logger, ex);
     }
 
-    public IEnumerable<ItemModel> GetShopItems(int shopId)
+    public IList<ItemModel> GetShopItems(int shopId)
     {
         if (_shopItems.ContainsKey(shopId))
         {

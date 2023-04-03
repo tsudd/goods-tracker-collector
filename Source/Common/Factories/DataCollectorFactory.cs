@@ -12,7 +12,9 @@ using GoodsTracker.DataCollector.Common.Scrapers;
 using GoodsTracker.DataCollector.Common.Scrapers.Abstractions;
 using GoodsTracker.DataCollector.Common.Trackers;
 using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
+using GoodsTracker.DataCollector.DB.Context;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -24,9 +26,11 @@ public class DataCollectorFactory : IDataCollectorFactory
 {
     protected static IWebDriver? _driverInstanse;
     protected readonly ILoggerFactory _loggerFactory;
-    public DataCollectorFactory(ILoggerFactory loggerFactory)
+    protected readonly IDbContextFactory<CollectorContext> _contextFactory;
+    public DataCollectorFactory(ILoggerFactory loggerFactory, IDbContextFactory<CollectorContext> contextFactory)
     {
         _loggerFactory = loggerFactory;
+        _contextFactory = contextFactory;
     }
 
     public IDataAdapter CreateDataAdapter(IOptions<AdapterConfig> options)
@@ -34,6 +38,10 @@ public class DataCollectorFactory : IDataCollectorFactory
         var providedConfig = options.Value;
         return providedConfig.AdapterName switch
         {
+            nameof(PostgresAdapter) => new PostgresAdapter(
+                    providedConfig,
+                    _loggerFactory.CreateLogger<PostgresAdapter>(),
+                    _contextFactory.CreateDbContext()),
             nameof(CsvAdapter) => new CsvAdapter(
                     providedConfig,
                     _loggerFactory.CreateLogger<CsvAdapter>()),

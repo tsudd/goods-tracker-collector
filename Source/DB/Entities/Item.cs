@@ -20,7 +20,7 @@ public class Item
 
     [Column(TypeName = "text")]
     public Uri? ImageLink { get; set; }
-    public double? Weight { get; set; }
+    public float? Weight { get; set; }
     public string? WeightUnit { get; set; }
     public long? VendorCode { get; set; }
     public string? Compound { get; set; }

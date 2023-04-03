@@ -16,10 +16,10 @@ public class ItemError
     [Required]
     public string Details { get; set; } = null!;
 
-    [Required]
-    public string SerialiedItem { get; set; } = null!;
+    public string? SerialiedItem { get; set; }
 
     public int StreamId { get; set; }
+    public bool Resolved { get; set; }
 
     [Required]
     public Stream Stream { get; set; } = null!;

@@ -77,6 +77,29 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "item_errors",
+                columns: table => new
+                {
+                    id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    error_type = table.Column<int>(type: "integer", nullable: false),
+                    details = table.Column<string>(type: "text", nullable: false),
+                    serialied_item = table.Column<string>(type: "text", nullable: true),
+                    stream_id = table.Column<int>(type: "integer", nullable: false),
+                    resolved = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_item_errors", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_item_errors_streams_stream_id",
+                        column: x => x.stream_id,
+                        principalTable: "streams",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "items",
                 columns: table => new
                 {
@@ -87,7 +110,7 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                     name2 = table.Column<string>(type: "text", nullable: true),
                     name3 = table.Column<string>(type: "text", nullable: true),
                     image_link = table.Column<string>(type: "text", nullable: true),
-                    weight = table.Column<double>(type: "double precision", nullable: true),
+                    weight = table.Column<float>(type: "real", nullable: true),
                     weight_unit = table.Column<string>(type: "text", nullable: true),
                     vendor_code = table.Column<long>(type: "bigint", nullable: true),
                     compound = table.Column<string>(type: "text", nullable: true),
@@ -211,6 +234,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                 column: "items_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_item_errors_stream_id",
+                table: "item_errors",
+                column: "stream_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_item_records_stream_id",
                 table: "item_records",
                 column: "stream_id");
@@ -241,6 +269,9 @@ namespace GoodsTracker.DataCollector.DB.Migrations
 
             migrationBuilder.DropTable(
                 name: "favorite_items");
+
+            migrationBuilder.DropTable(
+                name: "item_errors");
 
             migrationBuilder.DropTable(
                 name: "item_records");

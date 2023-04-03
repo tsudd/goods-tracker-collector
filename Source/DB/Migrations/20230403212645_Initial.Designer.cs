@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodsTracker.DataCollector.DB.Migrations
 {
     [DbContext(typeof(CollectorContext))]
-    [Migration("20230402135809_ErrorsTable")]
-    partial class ErrorsTable
+    [Migration("20230403212645_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -160,8 +160,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("vendor_id");
 
-                    b.Property<double?>("Weight")
-                        .HasColumnType("double precision")
+                    b.Property<float?>("Weight")
+                        .HasColumnType("real")
                         .HasColumnName("weight");
 
                     b.Property<string>("WeightUnit")
@@ -204,8 +204,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("error_type");
 
+                    b.Property<bool>("Resolved")
+                        .HasColumnType("boolean")
+                        .HasColumnName("resolved");
+
                     b.Property<string>("SerialiedItem")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("serialied_item");
 

@@ -157,8 +157,8 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("vendor_id");
 
-                    b.Property<double?>("Weight")
-                        .HasColumnType("double precision")
+                    b.Property<float?>("Weight")
+                        .HasColumnType("real")
                         .HasColumnName("weight");
 
                     b.Property<string>("WeightUnit")
@@ -201,8 +201,11 @@ namespace GoodsTracker.DataCollector.DB.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("error_type");
 
+                    b.Property<bool>("Resolved")
+                        .HasColumnType("boolean")
+                        .HasColumnName("resolved");
+
                     b.Property<string>("SerialiedItem")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("serialied_item");
 

@@ -214,7 +214,7 @@ internal sealed class PostgresAdapter : IDataAdapter
                 && i.VendorId == vendor.Id
                 && i.Weight == model.Weight);
 
-        if (result == null || model.HasItemChanged(result.ProducerId))
+        if (result == null)
         {
             item = model.ToEntity();
 
@@ -254,7 +254,7 @@ internal sealed class PostgresAdapter : IDataAdapter
         }).ToListAsync().ConfigureAwait(false);
     }
 
-    private static void UpdateItemIfRequired(ref Item item, ItemModel model)
+    private void UpdateItemIfRequired(ref Item item, ItemModel model)
     {
         if (model.DoesItemRequireUpdate(item))
         {

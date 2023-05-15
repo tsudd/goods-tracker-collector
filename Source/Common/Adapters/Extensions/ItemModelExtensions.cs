@@ -51,11 +51,6 @@ internal static class ItemModelExtensions
         };
     }
 
-    public static bool HasItemChanged(this ItemModel model, uint? producerId)
-    {
-        return (model.Producer != null ? HashCodeGenerator.GetHashCode(model.Producer!) : null) != producerId;
-    }
-
     public static bool DoesItemRequireUpdate(this ItemModel model, Item entity)
     {
         return model.Link != entity.ImageLink?.AbsolutePath

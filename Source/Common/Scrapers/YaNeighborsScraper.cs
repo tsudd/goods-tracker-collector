@@ -86,7 +86,7 @@ public sealed class YaNeighborsScraper : IScraper
             {
                 item.Categories.Add(category.CategoryName);
             }
-            items.AddRange(await ProcessCategoryPageAsync(category).ConfigureAwait(false));
+            items.AddRange(categoryItems);
         }
 
         return items;

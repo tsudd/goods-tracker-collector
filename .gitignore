@@ -352,3 +352,4 @@ MigrationBackup/
 .vscode
 Source/Common/DbClient/*
 .env
+.idea

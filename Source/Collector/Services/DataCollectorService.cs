@@ -10,13 +10,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-public class DataCollectorService : BackgroundService
+public sealed class DataCollectorService : BackgroundService
 {
-    private readonly ILogger _logger;
+    private readonly ILogger<DataCollectorService> _logger;
     private readonly IItemTracker _tracker;
     private readonly DataCollectorOptions _options;
     private readonly IDataAdapter _dataAdapter;
     private readonly IHostApplicationLifetime _appLifeTime;
+
     public DataCollectorService(
         ILogger<DataCollectorService> logger,
         IItemTracker tracker,
@@ -25,7 +26,6 @@ public class DataCollectorService : BackgroundService
         IHostApplicationLifetime appLifeTime)
     {
         ArgumentNullException.ThrowIfNull(options);
-
         _logger = logger;
         _tracker = tracker;
         _options = options.Value;
@@ -40,6 +40,7 @@ public class DataCollectorService : BackgroundService
             "Starting scraping of items.")(
                 _logger, null);
 
+        // TODO: better feedback about how did it go
         await _tracker.FetchItemsAsync().ConfigureAwait(false);
 
         LoggerMessage.Define(
@@ -64,16 +65,16 @@ public class DataCollectorService : BackgroundService
 
     public override void Dispose()
     {
-        Dispose(true);
+        this.Dispose(true);
         GC.SuppressFinalize(this);
         base.Dispose();
     }
 
-    public virtual void Dispose(bool disposing)
+    public void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _tracker.ClearData();
+            this._tracker.ClearData();
         }
     }
 }

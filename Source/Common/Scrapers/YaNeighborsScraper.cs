@@ -22,6 +22,7 @@ public sealed class YaNeighborsScraper : IScraper
 {
     private const int requestAttemptsMaxAmount = 3;
     private const int delayBetweenRequests = 600;
+    private const int maxWaitingTime = 20;
     private readonly static Regex productPublicIdPattern = new Regex(
         @"([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\?placeSlug=(.*)$",
         RegexOptions.Compiled
@@ -64,7 +65,7 @@ public sealed class YaNeighborsScraper : IScraper
         _config = config;
         _parser = parser;
         _driver = driver;
-        _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+        _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(maxWaitingTime));
     }
 
     public ScraperConfig GetConfig()
@@ -79,6 +80,12 @@ public sealed class YaNeighborsScraper : IScraper
 
         foreach (var category in categories)
         {
+            var categoryItems = await ProcessCategoryPageAsync(category).ConfigureAwait(false);
+            // TODO: optimize this post processing
+            foreach (var item in categoryItems)
+            {
+                item.Categories.Add(category.CategoryName);
+            }
             items.AddRange(await ProcessCategoryPageAsync(category).ConfigureAwait(false));
         }
 

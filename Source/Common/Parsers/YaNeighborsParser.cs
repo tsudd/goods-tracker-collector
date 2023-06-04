@@ -1,35 +1,36 @@
 using System.Text.RegularExpressions;
+
 using GoodsTracker.DataCollector.Common.Mappers.Abstractions;
 using GoodsTracker.DataCollector.Common.Parsers.Abstractions;
+
 using Microsoft.Extensions.Logging;
+
 using GoodsTracker.DataCollector.Models.Constants;
+
 using System.Text.Json;
+
 using GoodsTracker.DataCollector.Common.Parsers.Extensions;
+
 using FluentResults;
 
 namespace GoodsTracker.DataCollector.Common.Parsers;
 
 public sealed class YaNeighborsParser : IItemParser
 {
-    private readonly static Regex itemTitleRegex = new Regex(
-        @"^(.*)(\s(\d+\.?\d*\s?)(\w*)?)$",
-        RegexOptions.Compiled
-    );
-    private readonly static Regex itemWeightRegex = new Regex(
-        @"^(\d*)\s?(\w+)$",
-        RegexOptions.Compiled
-    );
+    private static readonly Regex itemTitleRegex = new(@"^(.*)(\s(\d+\.?\d*\s?)(\w*)?)$", RegexOptions.Compiled);
+    private static readonly Regex itemWeightRegex = new(@"^(\d*)\s?(\w+)$", RegexOptions.Compiled);
     private const int maxLengthOfSecondTitle = 70;
-    private ILogger<YaNeighborsParser> _logger;
+    private ILogger<YaNeighborsParser> logger;
 
     public YaNeighborsParser(ILogger<YaNeighborsParser> logger)
     {
-        _logger = logger;
+        this.logger = logger;
     }
 
     public Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
     {
         var getDocumentResult = TryParseJsonDocument(rawItem);
+
         if (getDocumentResult.IsFailed)
         {
             return getDocumentResult.ToResult();
@@ -37,20 +38,27 @@ public sealed class YaNeighborsParser : IItemParser
 
         using var productDoc = getDocumentResult.Value;
         var root = productDoc.RootElement;
-
         var fields = new Dictionary<ItemFields, string>();
-
         var itemNode = root.GetProperty("menu_item");
 
         // TODO: create general method for all try get prop values
         if (itemNode.TryGetPropertyValue("name", out string rawTitle))
         {
             var itemTitleMatch = itemTitleRegex.Match(rawTitle);
+
             if (itemTitleMatch.Success)
             {
-                fields.AddItemName1(itemTitleMatch.Groups[1].Value);
-                fields.AddItemWeight(itemTitleMatch.Groups[3].Value);
-                fields.AddItemWeightUnit(itemTitleMatch.Groups[4].Value);
+                fields.AddItemName1(
+                    itemTitleMatch.Groups[1]
+                                  .Value);
+
+                fields.AddItemWeight(
+                    itemTitleMatch.Groups[3]
+                                  .Value);
+
+                fields.AddItemWeightUnit(
+                    itemTitleMatch.Groups[4]
+                                  .Value);
             }
             else
             {
@@ -59,10 +67,16 @@ public sealed class YaNeighborsParser : IItemParser
                 if (itemNode.TryGetPropertyValue("weight", out string fullWeight))
                 {
                     var fullWeightMatch = itemWeightRegex.Match(fullWeight);
+
                     if (fullWeightMatch.Length == fullWeight.Length)
                     {
-                        fields.AddItemWeight(fullWeightMatch.Groups[1].Value);
-                        fields.AddItemWeightUnit(fullWeightMatch.Groups[2].Value);
+                        fields.AddItemWeight(
+                            fullWeightMatch.Groups[1]
+                                           .Value);
+
+                        fields.AddItemWeightUnit(
+                            fullWeightMatch.Groups[2]
+                                           .Value);
                     }
                 }
             }
@@ -120,7 +134,6 @@ public sealed class YaNeighborsParser : IItemParser
             TryReadItemDetails(detailsElement, ref fields);
         }
 
-
         if (root.TryGetProperty("categories", out JsonElement categoriesElement))
         {
             TryReadItemCategories(categoriesElement, ref fields);
@@ -152,45 +165,55 @@ public sealed class YaNeighborsParser : IItemParser
                     continue;
                 }
             }
-            if (detail.TryGetProperty("payload", out JsonElement payload))
+
+            if (!detail.TryGetProperty("payload", out JsonElement payload))
             {
-                if (payload.TryGetProperty("descriptions", out JsonElement descriptions))
+                continue;
+            }
+
+            if (!payload.TryGetProperty("descriptions", out JsonElement descriptions))
+            {
+                continue;
+            }
+
+            foreach (JsonElement description in descriptions.EnumerateArray())
+            {
+                if (!description.TryGetProperty("title", out JsonElement descriptionElement))
                 {
-                    foreach (var description in descriptions.EnumerateArray())
+                    continue;
+                }
+
+                if (descriptionElement.GetString() == "Manufacturer")
+                {
+                    if (description.TryGetPropertyValue("text", out string value))
                     {
-                        if (description.TryGetProperty("title", out JsonElement descriptionElement))
-                        {
-                            if (descriptionElement.GetString() == "Manufacturer")
-                            {
-                                if (description.TryGetPropertyValue("text", out string value))
-                                {
-                                    fieldsDict.AddItemProducer(value);
-                                }
-                            }
-                            else if (descriptionElement.GetString() == "Country")
-                            {
-                                if (description.TryGetPropertyValue("text", out string value))
-                                {
-                                    fieldsDict.AddItemCountry(value);
-                                }
-                            }
-                            else if (descriptionElement.GetString() == "Description")
-                            {
-                                if (description.TryGetPropertyValue("text", out string value))
-                                {
-                                    fieldsDict.AddItemCompound(value);
-                                }
-                            }
-                        }
+                        fieldsDict.AddItemProducer(value);
+                    }
+                }
+                else if (descriptionElement.GetString() == "Country")
+                {
+                    if (description.TryGetPropertyValue("text", out string value))
+                    {
+                        fieldsDict.AddItemCountry(value);
+                    }
+                }
+                else if (descriptionElement.GetString() == "Description" ||
+                         descriptionElement.GetString() == "Описание")
+                {
+                    if (description.TryGetPropertyValue("text", out string value))
+                    {
+                        fieldsDict.AddItemCompound(value);
                     }
                 }
             }
         }
     }
 
-    private static void TryReadItemCategories(JsonElement categoriesElement, ref Dictionary<ItemFields, string> fieldsDict)
+    private static void TryReadItemCategories(
+        JsonElement categoriesElement, ref Dictionary<ItemFields, string> fieldsDict)
     {
         var categories = new List<string>();
+
         foreach (var category in categoriesElement.EnumerateArray())
         {
             if (category.TryGetPropertyValue("name", out string categoryName))
@@ -198,6 +221,7 @@ public sealed class YaNeighborsParser : IItemParser
                 categories.Add(categoryName);
             }
         }
+
         fieldsDict.AddItemCategories(string.Join(IItemMapper.CategoriesSeparator, categories.Distinct()));
     }
 }

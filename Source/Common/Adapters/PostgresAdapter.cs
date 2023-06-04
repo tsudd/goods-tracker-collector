@@ -11,9 +11,13 @@ using GoodsTracker.DataCollector.Models;
 using StreamRecord = GoodsTracker.DataCollector.DB.Entities.Stream;
 
 using Microsoft.Extensions.Logging;
+
 using GoodsTracker.DataCollector.DB.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using FluentResults;
+
 using GoodsTracker.DataCollector.Common.Adapters.Extensions;
 using GoodsTracker.DataCollector.Common.Adapters.Results;
 using GoodsTracker.DataCollector.Common.Adapters.Helpers;
@@ -21,37 +25,43 @@ using GoodsTracker.DataCollector.DB.Entities.Enumerators;
 
 internal sealed class PostgresAdapter : IDataAdapter
 {
-    private readonly AdapterConfig _config;
-    private readonly CollectorContext _context;
-    private readonly ILogger _logger;
-    public PostgresAdapter(
-        AdapterConfig config,
-        ILogger<PostgresAdapter> logger,
-        CollectorContext context)
+    private readonly AdapterConfig config;
+    private readonly CollectorContext context;
+    private readonly ILogger logger;
+
+    public PostgresAdapter(AdapterConfig config, ILogger<PostgresAdapter> logger, CollectorContext context)
     {
-        _config = config;
-        _context = context;
-        _logger = logger;
+        this.config = config;
+        this.context = context;
+        this.logger = logger;
     }
 
     public async Task SaveItemsAsync(IItemTracker tracker, IEnumerable<int> shopIds)
     {
-        Log(LogLevel.Information, "Starting saving items into PostgreSQL");
-        Log(LogLevel.Information, "Fetching vendors with the provided list of ids...");
-        var vendors = await GetVendorsAsync(shopIds).ConfigureAwait(false);
-        Log(LogLevel.Information, $"Received {vendors.Count} vendor(s): {string.Join(',', vendors.Select(v => v.Name1))}");
+        this.Log(LogLevel.Information, "Starting saving items into PostgreSQL");
+        this.Log(LogLevel.Information, "Fetching vendors with the provided list of ids...");
 
-        var stream = await CreateNewStreamAsync().ConfigureAwait(false);
+        var vendors = await this.GetVendorsAsync(shopIds)
+                                .ConfigureAwait(false);
 
-        Log(LogLevel.Information, "New stream was created.");
+        this.Log(
+            LogLevel.Information,
+            $"Received {vendors.Count} vendor(s): {string.Join(',', vendors.Select(v => v.Name1))}");
+
+        var stream = await this.CreateNewStreamAsync()
+                               .ConfigureAwait(false);
+
+        this.Log(LogLevel.Information, "New stream was created.");
 
         foreach (var vendor in vendors)
         {
-            Log(LogLevel.Information, $"Saving items for {vendor.Name1}.");
+            this.Log(LogLevel.Information, $"Saving items for {vendor.Name1}.");
             var items = tracker.GetShopItems(vendor.Id);
+
             if (items.Count == 0)
             {
-                Log(LogLevel.Warning, $"No items to save for {vendor.Name2}.");
+                this.Log(LogLevel.Warning, $"No items to save for {vendor.Name2}.");
+
                 continue;
             }
 
@@ -62,15 +72,17 @@ internal sealed class PostgresAdapter : IDataAdapter
 
             foreach (var item in items)
             {
-                _context.Attach(vendor);
+                this.context.Attach(vendor);
 
                 if (item.DoesNotContainBasicInfo())
                 {
                     rejectedItems++;
+
                     continue;
                 }
 
-                var saveResult = await UpsertItemAsync(item, vendor, stream).ConfigureAwait(false);
+                var saveResult = await this.UpsertItemAsync(item, vendor, stream)
+                                           .ConfigureAwait(false);
 
                 if (saveResult.IsFailed)
                 {
@@ -85,29 +97,31 @@ internal sealed class PostgresAdapter : IDataAdapter
                     savedItems++;
                 }
 
-                _context.ChangeTracker.Clear();
-                _context.Attach(stream);
+                this.context.ChangeTracker.Clear();
+                this.context.Attach(stream);
             }
 
-            await SaveFailedResultsAsync(errors, stream).ConfigureAwait(false);
+            await this.SaveFailedResultsAsync(errors, stream)
+                      .ConfigureAwait(false);
 
-            Log(
+            this.Log(
                 LogLevel.Information,
-                $"Completed saving of items for {vendor.Name2}: "
-                + $"{savedItems} were saved, {updatedItems} were updated, {errors.Count}"
-                + $" failed to be saved, {rejectedItems} were rejected.");
+                $"Completed saving of items for {vendor.Name2}: " +
+                $"{savedItems} were saved, {updatedItems} were updated, {errors.Count}" +
+                $" failed to be saved, {rejectedItems} were rejected.");
         }
     }
 
     public void SaveItems(IItemTracker tracker, IEnumerable<int> shopIds)
     {
-        this.SaveItemsAsync(tracker, shopIds).Wait();
+        this.SaveItemsAsync(tracker, shopIds)
+            .Wait();
     }
 
     // TODO: improve logging
     private void Log(LogLevel level, string message)
     {
-        LoggerMessage.Define(level, 0, message)(_logger, null);
+        LoggerMessage.Define(level, 0, message)(this.logger, null);
     }
 
     private async Task<StreamRecord> CreateNewStreamAsync()
@@ -117,9 +131,10 @@ internal sealed class PostgresAdapter : IDataAdapter
             FetchDate = DateTime.UtcNow,
         };
 
-        _context.Add<StreamRecord>(streamOfFetchedItems);
+        this.context.Add<StreamRecord>(streamOfFetchedItems);
 
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await this.context.SaveChangesAsync()
+                  .ConfigureAwait(false);
 
         return streamOfFetchedItems;
     }
@@ -127,11 +142,13 @@ internal sealed class PostgresAdapter : IDataAdapter
     private async Task<Result> UpsertItemAsync(ItemModel model, Vendor vendor, StreamRecord stream)
     {
         ISuccess? upsertResult;
-        if (TryGetItemOrCreateFromModel(model, vendor, out Item item))
-        {
-            UpdateItemIfRequired(ref item, model);
 
-            var newCategories = await AddNewCategoriesAsync(model.Categories).ConfigureAwait(false);
+        if (this.TryGetItemOrCreateFromModel(model, vendor, out Item item))
+        {
+            this.UpdateItemIfRequired(ref item, model);
+
+            var newCategories = await this.AddNewCategoriesAsync(model.Categories)
+                                          .ConfigureAwait(false);
 
             foreach (var category in newCategories)
             {
@@ -143,19 +160,30 @@ internal sealed class PostgresAdapter : IDataAdapter
         else
         {
             item.Vendor = vendor;
-            item.Categories = await AddCategoriesAsync(model.Categories).ConfigureAwait(false);
-            item.Producer = await GetOrCreateProducerAsync(model).ConfigureAwait(false);
-            await _context.AddAsync(item).ConfigureAwait(false);
+
+            item.Categories = await this.AddCategoriesAsync(model.Categories)
+                                        .ConfigureAwait(false);
+
+            item.Producer = await this.GetOrCreateProducerAsync(model)
+                                      .ConfigureAwait(false);
+
+            await this.context.AddAsync(item)
+                      .ConfigureAwait(false);
+
             upsertResult = new CreatedResult();
         }
 
-        await _context.AddAsync(model.ToItemRecord(stream, item)).ConfigureAwait(false);
+        await this.context.AddAsync(model.ToItemRecord(stream, item))
+                  .ConfigureAwait(false);
 
         var saveResult = await Result.Try(
-            () => _context.SaveChangesAsync(),
-            ex => new FailedResult(ex.InnerException?.Message ?? ex.Message)).ConfigureAwait(false);
+                                         () => this.context.SaveChangesAsync(), static ex => new FailedResult(ex.InnerException?.Message ?? ex.Message))
+                                     .ConfigureAwait(false);
 
-        return saveResult.IsSuccess ? Result.Ok().WithSuccess(upsertResult) : saveResult.ToResult();
+        return saveResult.IsSuccess
+            ? Result.Ok()
+                    .WithSuccess(upsertResult)
+            : saveResult.ToResult();
     }
 
     private async Task<Producer?> GetOrCreateProducerAsync(ItemModel model)
@@ -167,9 +195,9 @@ internal sealed class PostgresAdapter : IDataAdapter
 
         var producerId = HashCodeGenerator.GetHashCode(model.Producer);
 
-        var existingProducer = await _context.Producers
-            .Select(static p => p.Id)
-            .FirstOrDefaultAsync(p => p == producerId).ConfigureAwait(false);
+        var existingProducer = await this.context.Producers.Select(static p => p.Id)
+                                         .FirstOrDefaultAsync(p => p == producerId)
+                                         .ConfigureAwait(false);
 
         if (existingProducer != default)
         {
@@ -178,7 +206,8 @@ internal sealed class PostgresAdapter : IDataAdapter
                 Id = producerId,
             };
 
-            _context.Attach(result);
+            this.context.Attach(result);
+
             return result;
         }
 
@@ -194,25 +223,25 @@ internal sealed class PostgresAdapter : IDataAdapter
     {
         ArgumentNullException.ThrowIfNull(model.Name1);
 
-        var result = _context.Items
-            .Include(static i => i.Categories)
-            .Select(static i => new
-            {
-                i.Id,
-                i.Name1,
-                i.VendorId,
-                i.Fat,
-                i.Protein,
-                i.Carbo,
-                i.ProducerId,
-                i.Weight,
-                i.ImageLink,
-                i.Portion,
-            })
-            .FirstOrDefault(
-                i => EF.Functions.ILike(i.Name1, model.Name1)
-                && i.VendorId == vendor.Id
-                && i.Weight == model.Weight);
+        var result = this.context.Items.Include(static i => i.Categories)
+                         .Select(
+                             static i => new
+                             {
+                                 i.Id,
+                                 i.Name1,
+                                 i.VendorId,
+                                 i.Fat,
+                                 i.Protein,
+                                 i.Carbo,
+                                 i.ProducerId,
+                                 i.Weight,
+                                 i.ImageLink,
+                                 i.Portion,
+                             })
+                         .FirstOrDefault(
+                             i => EF.Functions.ILike(i.Name1, model.Name1) &&
+                                  i.VendorId == vendor.Id &&
+                                  i.Weight == model.Weight);
 
         if (result == null)
         {
@@ -234,24 +263,30 @@ internal sealed class PostgresAdapter : IDataAdapter
             Protein = result.Protein,
             Carbo = result.Carbo,
         };
-        _context.Attach(item);
+
+        this.context.Attach(item);
 
         return true;
     }
 
     private async Task<IList<Vendor>> GetVendorsAsync(IEnumerable<int> ids)
     {
-        var vendors = _context.Vendors.Where(vendor => ids.Contains(vendor.Id)).Select(static v => new
-        {
-            v.Id,
-            v.Name2,
-        });
+        var vendors = this.context.Vendors.Where(vendor => ids.Contains(vendor.Id))
+                          .Select(
+                              static v => new
+                              {
+                                  v.Id,
+                                  v.Name2,
+                              });
 
-        return await vendors.Select(static v => new Vendor
-        {
-            Id = v.Id,
-            Name1 = v.Name2,
-        }).ToListAsync().ConfigureAwait(false);
+        return await vendors.Select(
+                                static v => new Vendor
+                                {
+                                    Id = v.Id,
+                                    Name1 = v.Name2,
+                                })
+                            .ToListAsync()
+                            .ConfigureAwait(false);
     }
 
     private void UpdateItemIfRequired(ref Item item, ItemModel model)
@@ -263,13 +298,16 @@ internal sealed class PostgresAdapter : IDataAdapter
             item.Fat = model.Fat;
             item.Protein = model.Protein;
             item.Portion = model.Portion;
+            item.Compound = model.Compound;
             item.ImageLink = model.Link != null ? new Uri(model.Link) : item.ImageLink;
         }
     }
 
-    private async Task<IList<Category>> AddNewCategoriesAsync(IList<string> modelCategories)
+    private async Task<IList<Category>> AddNewCategoriesAsync(IEnumerable<string> modelCategories)
     {
-        var distinctCategories = modelCategories.Distinct().ToList();
+        var distinctCategories = modelCategories.Distinct()
+                                                .ToList();
+
         var newCategories = new List<Category>();
 
         if (distinctCategories.Count == 0)
@@ -279,12 +317,14 @@ internal sealed class PostgresAdapter : IDataAdapter
 
         var categoryCodes = distinctCategories.Select(static c => HashCodeGenerator.GetHashCode(c));
 
-        var existingCategoriesCodes = await _context.Categories
-                .Where(c => categoryCodes.Contains(c.Id))
-                .Select(static c => c.Id)
-                .ToListAsync().ConfigureAwait(false);
+        var existingCategoriesCodes = await this.context.Categories.Where(c => categoryCodes.Contains(c.Id))
+                                                .Select(static c => c.Id)
+                                                .ToListAsync()
+                                                .ConfigureAwait(false);
 
-        if (existingCategoriesCodes.Count == categoryCodes.Distinct().Count())
+        if (existingCategoriesCodes.Count ==
+            categoryCodes.Distinct()
+                         .Count())
         {
             return newCategories;
         }
@@ -292,13 +332,15 @@ internal sealed class PostgresAdapter : IDataAdapter
         foreach (var modelCategory in distinctCategories)
         {
             var code = HashCodeGenerator.GetHashCode(modelCategory);
+
             if (!existingCategoriesCodes.Any(c => c == code))
             {
-                newCategories.Add(new Category
-                {
-                    Id = code,
-                    Name = modelCategory,
-                });
+                newCategories.Add(
+                    new Category
+                    {
+                        Id = code,
+                        Name = modelCategory,
+                    });
             }
         }
 
@@ -307,7 +349,9 @@ internal sealed class PostgresAdapter : IDataAdapter
 
     private async Task<IList<Category>> AddCategoriesAsync(IList<string> modelCategories)
     {
-        var distinctCategories = modelCategories.Distinct().ToList();
+        var distinctCategories = modelCategories.Distinct()
+                                                .ToList();
+
         var categoriesToAdd = new List<Category>();
 
         if (distinctCategories.Count == 0)
@@ -318,18 +362,22 @@ internal sealed class PostgresAdapter : IDataAdapter
         var categoryCodes = distinctCategories.Select(static c => HashCodeGenerator.GetHashCode(c));
 
         categoriesToAdd.AddRange(
-            await _context.Categories.Where(c => categoryCodes.Contains(c.Id)).ToListAsync().ConfigureAwait(false));
+            await this.context.Categories.Where(c => categoryCodes.Contains(c.Id))
+                      .ToListAsync()
+                      .ConfigureAwait(false));
 
         foreach (var modelCategory in distinctCategories)
         {
             var code = HashCodeGenerator.GetHashCode(modelCategory);
+
             if (!categoriesToAdd.Any(c => c.Id == code))
             {
-                categoriesToAdd.Add(new Category
-                {
-                    Id = code,
-                    Name = modelCategory,
-                });
+                categoriesToAdd.Add(
+                    new Category
+                    {
+                        Id = code,
+                        Name = modelCategory,
+                    });
             }
         }
 
@@ -350,17 +398,24 @@ internal sealed class PostgresAdapter : IDataAdapter
             ErrorType type = ErrorType.SaveFailed;
 
             if (error.Message.StartsWith("23505", StringComparison.InvariantCulture))
-                type = ErrorType.DuplicateInTheStream;
-
-            await _context.AddAsync(new ItemError
             {
-                Stream = stream,
-                ErrorType = type,
-                Details = error.Message,
-                SerialiedItem = type != ErrorType.DuplicateInTheStream ? result.Value.Serialize() : null,
-            }).ConfigureAwait(false);
+                type = ErrorType.DuplicateInTheStream;
+            }
+
+            await this.context.AddAsync(
+                          new ItemError
+                          {
+                              Stream = stream,
+                              ErrorType = type,
+                              Details = error.Message,
+                              SerialiedItem = type != ErrorType.DuplicateInTheStream
+                                  ? result.Value.Serialize()
+                                  : null,
+                          })
+                      .ConfigureAwait(false);
         }
 
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await this.context.SaveChangesAsync()
+                  .ConfigureAwait(false);
     }
 }

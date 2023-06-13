@@ -59,11 +59,11 @@ public class BasicTracker : IItemTracker
 
             try
             {
-                _shopItems.Add(conf.ShopID, (await scraper.GetItemsAsync().ConfigureAwait(false)));
+                _shopItems.Add(conf.ShopId, (await scraper.GetItemsAsync().ConfigureAwait(false)));
 
                 LoggerMessage.Define(
                     LogLevel.Information, 0,
-                    $"{_shopItems[conf.ShopID].Count} items were scraped from {conf.ShopName}")(
+                    $"{_shopItems[conf.ShopId].Count} items were scraped from {conf.ShopName}")(
                         this._logger, null);
             }
             catch (Exception ex)

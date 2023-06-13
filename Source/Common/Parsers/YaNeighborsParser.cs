@@ -22,7 +22,7 @@ public sealed class YaNeighborsParser : IItemParser
     private const int maxLengthOfSecondTitle = 70;
     private ILogger<YaNeighborsParser> logger;
 
-    public YaNeighborsParser(ILogger<YaNeighborsParser> logger)
+    internal YaNeighborsParser(ILogger<YaNeighborsParser> logger)
     {
         this.logger = logger;
     }

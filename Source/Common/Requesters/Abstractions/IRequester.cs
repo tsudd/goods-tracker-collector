@@ -1,4 +1,5 @@
 using HtmlAgilityPack;
+
 namespace GoodsTracker.DataCollector.Common.Requesters.Abstractions;
 
 public interface IRequester

@@ -1,5 +1,6 @@
 namespace GoodsTracker.DataCollector.Common.Scrapers;
 
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 
 using GoodsTracker.DataCollector.Common.Configuration;
@@ -28,12 +29,14 @@ using SeleniumExtras.WaitHelpers;
 
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
+// TODO: move batch size into config
 internal sealed class EvrooptScraper : IScraper
 {
     private const int requestAttemptsMaxAmount = 3;
-    private const int delayBetweenRequests = 600;
+    private const int delayBetweenRequests = 100;
     private const int maxWaitingTime = 20;
-    private const int delayBetweenItemsLoad = 3;
+    private const int delayBetweenItemsLoadInSeconds = 3;
+    private const int batchSize = 100;
     private static readonly Regex productIdLinkPattern = new(@".*\/product\/(\d+)", RegexOptions.Compiled);
 
     private static readonly Regex dataSourceIdPattern = new(
@@ -83,10 +86,12 @@ internal sealed class EvrooptScraper : IScraper
 
         foreach ((string CategoryLink, string CategoryName) category in categories)
         {
-            IEnumerable<ItemModel> categoryItems = await this.ProcessCategoryPageAsync(category)
+            IEnumerable<ItemModel> categoryItems = await this.ProcessCategoryPageAsync(categories.Last())
                                                              .ConfigureAwait(false);
 
             items.AddRange(categoryItems);
+
+            break;
         }
 
         return items;
@@ -97,7 +102,7 @@ internal sealed class EvrooptScraper : IScraper
     {
         const string productsContainerXPath = "//div[contains(@class,'products_products')]";
         const string productsPaginationNextXPath = "//li[contains(@class,'pagination_next')]/a";
-        var productIds = new List<string>();
+        var productsQueue = new ConcurrentQueue<string>();
 
         this.driver.Navigate()
             .GoToUrl(new Uri(category.CategoryLink));
@@ -109,7 +114,7 @@ internal sealed class EvrooptScraper : IScraper
             this.LoadItems();
 
             ReadOnlyCollection<IWebElement> itemElements = this.driver.FindElements(
-                By.XPath(productsContainerXPath + "/div/div/div[2]/a[contains(@class,'vertical_preview__link')]"));
+                By.XPath(productsContainerXPath + "/div/div/div[2]/a"));
 
             foreach (IWebElement itemElement in itemElements)
             {
@@ -125,7 +130,7 @@ internal sealed class EvrooptScraper : IScraper
                     continue;
                 }
 
-                productIds.Add(
+                productsQueue.Enqueue(
                     productIdMatch.Groups[1]
                                   .Value);
             }
@@ -142,10 +147,55 @@ internal sealed class EvrooptScraper : IScraper
         }
         while (true);
 
-        Result<IEnumerable<ItemModel>> results = (await Task.WhenAll(productIds.Select(this.ProcessItemAsync))
-                                                            .ConfigureAwait(false)).Merge();
+        var results = new ConcurrentBag<ItemModel>();
+        var i = 0;
 
-        return results.Value;
+        do
+        {
+            var tasks = new List<Task>();
+
+            while (i < batchSize)
+            {
+                if (!productsQueue.TryDequeue(out string? productId))
+                {
+                    break;
+                }
+
+                tasks.Add(Task.Run(() => BatchAction(productId)));
+                i++;
+            }
+
+            await Task.WhenAll(tasks.ToArray())
+                      .ConfigureAwait(false);
+
+            if (productsQueue.IsEmpty)
+            {
+                break;
+            }
+
+            i = 0;
+        }
+        while (true);
+
+        return results;
+
+        async Task BatchAction(string productId)
+        {
+            Result<ItemModel> processResult = await this.ProcessItemAsync(productId)
+                                                        .ConfigureAwait(false);
+
+            if (processResult.IsSuccess)
+            {
+                results.Add(processResult.Value);
+            }
+            else
+            {
+                LoggerMessage.Define(
+                    LogLevel.Warning, 0,
+                    $"couldn't parse product {productId}: {processResult.Errors.FirstOrDefault()?.Message}.")(
+                    this.logger, null);
+            }
+        }
     }
 
     private IEnumerable<(string CategoryLink, string CategoryName)> GetCategoryLinks()
@@ -186,14 +236,16 @@ internal sealed class EvrooptScraper : IScraper
 
         if (requestProductResult.IsFailed)
         {
-            return Result.Fail($"couldn't fetch product info: {requestProductResult.Errors}");
+            return Result.Fail(
+                $"couldn't fetch product info: {string.Join(' ', requestProductResult.Errors.Select(static error => error.Message))}");
         }
 
         Result<Dictionary<ItemFields, string>> parseItemResult = this.parser.ParseItem(requestProductResult.Value);
 
         if (parseItemResult.IsFailed)
         {
-            return Result.Fail($"couldn't parse item info: {parseItemResult.Errors}");
+            return Result.Fail(
+                $"couldn't parse item info: {string.Join(' ', parseItemResult.Errors.Select(static error => error.Message))}");
         }
 
         return this.mapper.MapItemFields(parseItemResult.Value);
@@ -264,7 +316,7 @@ internal sealed class EvrooptScraper : IScraper
     {
         const string itemLoaderXPath = "//div[contains(@class,'lazy-listing_loader')]";
         var jsExecutor = (IJavaScriptExecutor)this.driver;
-        var waitForMore = new WebDriverWait(this.driver, TimeSpan.FromSeconds(delayBetweenItemsLoad));
+        var waitForMore = new WebDriverWait(this.driver, TimeSpan.FromSeconds(delayBetweenItemsLoadInSeconds));
 
         while (true)
         {

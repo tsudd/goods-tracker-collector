@@ -4,11 +4,12 @@ using GoodsTracker.DataCollector.Models.Constants;
 
 namespace GoodsTracker.DataCollector.Common.Mappers;
 
-public class BasicMapper : IItemMapper
+internal sealed class BasicMapper : IItemMapper
 {
     public ItemModel MapItemFields(Dictionary<ItemFields, string> fields)
     {
         Func<string, string?> noAffect = static _ => _;
+
         return new ItemModel
         {
             Name1 = TryGetValueOrDefault(fields, ItemFields.Name1, AdjustNameIfRequired),
@@ -26,80 +27,73 @@ public class BasicMapper : IItemMapper
             Fat = TryGetValueOrDefault(fields, ItemFields.Fat, ParseFloatOrDefault),
             Protein = TryGetValueOrDefault(fields, ItemFields.Protein, ParseFloatOrDefault),
             Portion = TryGetValueOrDefault(fields, ItemFields.Portion, ParseFloatOrDefault),
-            Categories = TryGetValueOrDefault(
-                fields,
-                ItemFields.Categories,
-                ParseCategoriesOrEmpty
-            ) ?? new List<string>(),
+            Categories = TryGetValueOrDefault(fields, ItemFields.Categories, ParseCategoriesOrEmpty) ??
+                         new List<string>(),
             Link = TryGetValueOrDefault(fields, ItemFields.ImageLink, noAffect),
             Adult = TryGetValueOrDefault(fields, ItemFields.Adult, ParseBooleanOrDefault),
             Guid = TryGetValueOrDefault(fields, ItemFields.Guid, ParseGuidOrDefault),
         };
     }
 
-    protected static long? ParseLongOrDefault(string numberValue)
+    private static long? ParseLongOrDefault(string numberValue)
     {
-        if (Int64.TryParse(numberValue, out long result))
+        if (long.TryParse(numberValue, out long result))
         {
             return result;
         }
+
         return null;
     }
 
-    protected static float? ParseFloatOrDefault(string numberValue)
+    private static float? ParseFloatOrDefault(string numberValue)
     {
-        if (
-            float.TryParse(
-                numberValue,
-                System.Globalization.NumberStyles.Float,
-                System.Globalization.NumberFormatInfo.InvariantInfo,
-                out float result
-            )
-        )
+        if (float.TryParse(
+            numberValue, System.Globalization.NumberStyles.Float, System.Globalization.NumberFormatInfo.InvariantInfo,
+            out float result))
         {
             return result;
         }
+
         return null;
     }
 
-    protected static decimal? ParseDecimalOrDefault(string numberValue)
+    private static decimal? ParseDecimalOrDefault(string numberValue)
     {
-        if (
-            decimal.TryParse(
-                numberValue,
-                System.Globalization.NumberStyles.Float,
-                System.Globalization.NumberFormatInfo.InvariantInfo,
-                out decimal result
-            )
-        )
+        if (decimal.TryParse(
+            numberValue, System.Globalization.NumberStyles.Float, System.Globalization.NumberFormatInfo.InvariantInfo,
+            out decimal result))
         {
             return result;
         }
+
         return null;
     }
 
-    protected static bool? ParseBooleanOrDefault(string boolValue)
+    private static bool? ParseBooleanOrDefault(string boolValue)
     {
         if (bool.TryParse(boolValue, out bool result))
         {
             return result;
         }
+
         return null;
     }
 
-    protected static List<string> ParseCategoriesOrEmpty(string categoriesValue)
+    private static List<string> ParseCategoriesOrEmpty(string categoriesValue)
     {
         ArgumentNullException.ThrowIfNull(categoriesValue);
 
-        return categoriesValue.Split(IItemMapper.CategoriesSeparator).ToList();
+        return categoriesValue.Split(IItemMapper.CategoriesSeparator)
+                              .ToList();
     }
 
-    protected static Guid? ParseGuidOrDefault(string guidValue)
+    private static Guid? ParseGuidOrDefault(string guidValue)
     {
         if (Guid.TryParse(guidValue, out Guid result))
         {
             return result;
         }
+
         return null;
     }
 
@@ -110,19 +104,16 @@ public class BasicMapper : IItemMapper
         return rawPrice.Replace(',', '.');
     }
 
-    protected static string AdjustNameIfRequired(string itemName)
+    private static string AdjustNameIfRequired(string itemName)
     {
         ArgumentNullException.ThrowIfNull(itemName);
 
-        return itemName.Replace("'", " ");
+        return itemName.Replace("'", " ", StringComparison.InvariantCulture);
     }
 
     // TODO: move to extension method
-    protected static TValue? TryGetValueOrDefault<TValue>(
-        Dictionary<ItemFields, string> dict,
-        ItemFields field,
-        Func<string, TValue?> affect
-    )
+    private static TValue? TryGetValueOrDefault<TValue>(
+        IReadOnlyDictionary<ItemFields, string> dict, ItemFields field, Func<string, TValue?> affect)
     {
         ArgumentNullException.ThrowIfNull(affect);
         ArgumentNullException.ThrowIfNull(dict);

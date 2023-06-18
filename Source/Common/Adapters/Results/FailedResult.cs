@@ -6,12 +6,10 @@ internal sealed class FailedResult : IError
 {
     public FailedResult(string message)
     {
-        Message = message;
+        this.Message = message;
     }
 
     public string Message { get; }
-
-    public Dictionary<string, object> Metadata => new Dictionary<string, object>();
-
-    public List<IError> Reasons => new List<IError>();
+    public Dictionary<string, object> Metadata => new();
+    public List<IError> Reasons => new();
 }

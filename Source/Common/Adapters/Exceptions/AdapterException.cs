@@ -1,16 +1,33 @@
 namespace GoodsTracker.DataCollector.Common.Adapters.Exceptions;
-[System.Serializable]
-public class AdapterException : System.Exception
+
+[Serializable]
+public class AdapterException : Exception
 {
-    public string ShopId { get; private set; } = String.Empty;
-    public AdapterException() { }
-    public AdapterException(string message) : base(message) { }
-    public AdapterException(string message, string shopId) : base(message)
+    public string ShopId { get; private set; } = string.Empty;
+
+    public AdapterException()
     {
-        ShopId = shopId;
     }
-    public AdapterException(string message, System.Exception inner) : base(message, inner) { }
+
+    public AdapterException(string message)
+        : base(message)
+    {
+    }
+
+    public AdapterException(string message, string shopId)
+        : base(message)
+    {
+        this.ShopId = shopId;
+    }
+
+    public AdapterException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+
     protected AdapterException(
-        System.Runtime.Serialization.SerializationInfo info,
-        System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
+        : base(info, context)
+    {
+    }
 }

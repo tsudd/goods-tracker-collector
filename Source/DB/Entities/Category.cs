@@ -22,6 +22,8 @@ public class Category
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
+            ArgumentNullException.ThrowIfNull(builder);
+
             builder.HasIndex(static x => x.Name)
                    .HasMethod("gin")
                    .HasOperators("gin_trgm_ops");

@@ -19,8 +19,8 @@ internal sealed class BasicRequester : IRequester
     {
         using var request = CreateRequest(url, headers);
 
-        var response = await this.Client.SendAsync(request)
-                                 .ConfigureAwait(false);
+        HttpResponseMessage response = await this.Client.SendAsync(request)
+                                                 .ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -41,9 +41,9 @@ internal sealed class BasicRequester : IRequester
         var result = "";
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
 
-        if ((headers != null))
+        if (headers != null)
         {
-            foreach (var header in headers)
+            foreach (KeyValuePair<string, string> header in headers)
             {
                 request.Headers.Add(header.Key, header.Value);
             }
@@ -52,32 +52,30 @@ internal sealed class BasicRequester : IRequester
         request.Content = new StringContent(data);
         request.Content!.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json;charset=utf-8");
 
-        using (var response = await this.Client.SendAsync(request)
-                                        .ConfigureAwait(false))
-        {
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException($"couldn't perform POST to {uri.AbsoluteUri}");
-            }
+        using HttpResponseMessage response = await this.Client.SendAsync(request)
+                                                       .ConfigureAwait(false);
 
-            using (var reader = new StreamReader(
-                await response.Content.ReadAsStreamAsync()
-                              .ConfigureAwait(false)))
-            {
-                result = await reader.ReadToEndAsync()
-                                     .ConfigureAwait(false);
-            }
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"couldn't perform POST to {uri.AbsoluteUri}");
         }
+
+        using var reader = new StreamReader(
+            await response.Content.ReadAsStreamAsync()
+                          .ConfigureAwait(false));
+
+        result = await reader.ReadToEndAsync()
+                             .ConfigureAwait(false);
 
         return result;
     }
 
     public async Task<string> GetAsync(string url, Dictionary<string, string>? headers = null)
     {
-        using var request = CreateRequest(url, headers);
+        using HttpRequestMessage request = CreateRequest(url, headers);
 
-        using var response = await this.Client.SendAsync(request)
-                                       .ConfigureAwait(false);
+        using HttpResponseMessage response = await this.Client.SendAsync(request)
+                                                       .ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -92,12 +90,14 @@ internal sealed class BasicRequester : IRequester
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-        if (headers != null)
+        if (headers == null)
         {
-            foreach (var header in headers)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
+            return request;
+        }
+
+        foreach (KeyValuePair<string, string> header in headers)
+        {
+            request.Headers.Add(header.Key, header.Value);
         }
 
         return request;

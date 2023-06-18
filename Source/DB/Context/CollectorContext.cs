@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 public class CollectorContext : DbContext
 {
-    public CollectorContext(DbContextOptions options) : base(options)
+    public CollectorContext(DbContextOptions options)
+        : base(options)
     {
     }
 

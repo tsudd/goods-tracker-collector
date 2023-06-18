@@ -9,16 +9,14 @@ using GoodsTracker.DataCollector.Common.Trackers.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace GoodsTracker.DataCollector.Common.Factories.Abstractions;
+
 public interface IDataCollectorFactory : IDisposable
 {
     IItemParser CreateParser(string parserName);
+
     IScraper CreateScraper(
-        ScraperConfig config,
-        IItemParser? parser = null,
-        IItemMapper? mapper = null,
-        IRequester? requester = null
-    );
-    IItemTracker CreateTracker(
-        IOptions<TrackerConfig> options);
+        ScraperConfig config, IItemParser? parser = null, IItemMapper? mapper = null, IRequester? requester = null);
+
+    IItemTracker CreateTracker(IOptions<TrackerConfig> options);
     IDataAdapter CreateDataAdapter(IOptions<AdapterConfig> config);
 }

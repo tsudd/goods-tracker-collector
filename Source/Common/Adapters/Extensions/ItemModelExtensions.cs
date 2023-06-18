@@ -1,6 +1,5 @@
 namespace GoodsTracker.DataCollector.Common.Adapters.Extensions;
 
-using GoodsTracker.DataCollector.Common.Adapters.Helpers;
 using GoodsTracker.DataCollector.DB.Entities;
 using GoodsTracker.DataCollector.Models;
 
@@ -53,11 +52,11 @@ internal static class ItemModelExtensions
 
     public static bool DoesItemRequireUpdate(this ItemModel model, Item entity)
     {
-        return model.Link != entity.ImageLink?.AbsolutePath
-            || model.Fat != entity.Fat
-            || model.Carbo != entity.Carbo
-            || model.Protein != entity.Protein
-            || model.Portion != entity.Portion;
+        return model.Link != entity.ImageLink?.AbsolutePath ||
+               !Equals(model.Fat, entity.Fat) ||
+               !Equals(model.Carbo, entity.Carbo) ||
+               !Equals(model.Protein, entity.Protein) ||
+               !Equals(model.Portion, entity.Portion);
     }
 
     public static string Serialize(this ItemModel model)
@@ -67,6 +66,7 @@ internal static class ItemModelExtensions
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
             WriteIndented = false,
         };
+
         return JsonSerializer.Serialize(model, opt);
     }
 }

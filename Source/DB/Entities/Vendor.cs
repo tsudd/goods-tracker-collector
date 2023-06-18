@@ -13,6 +13,7 @@ public class Vendor
 {
     [Key]
     public int Id { get; set; }
+
     public string? Name1 { get; set; }
     public string? Name2 { get; set; }
     public string? Name3 { get; set; }

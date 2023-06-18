@@ -17,7 +17,6 @@ public class ItemError
     public string Details { get; set; } = null!;
 
     public string? SerialiedItem { get; set; }
-
     public int StreamId { get; set; }
     public bool Resolved { get; set; }
 

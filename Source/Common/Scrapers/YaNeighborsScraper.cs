@@ -112,10 +112,10 @@ internal sealed class YaNeighborsScraper : IScraper
     }
 
     private async Task<IEnumerable<ItemModel>> ProcessCategoryPageAsync(
-        (string CategoryLink, string CategoryName) categoryRecource)
+        (string CategoryLink, string CategoryName) categoryResource)
     {
         this.driver.Navigate()
-            .GoToUrl(new Uri(this.config.ShopUrl + categoryRecource.CategoryLink));
+            .GoToUrl(new Uri(this.config.ShopUrl + categoryResource.CategoryLink));
 
         this.WaitForPageToLoad(By.XPath("//ul[@class='DesktopGoodsList_list']/li/a"));
         HtmlDocument page = this.GetCurrentHtmlDoc();
@@ -125,7 +125,7 @@ internal sealed class YaNeighborsScraper : IScraper
         if (itemNodes == null)
         {
             LoggerMessage.Define(
-                LoggingLevel.Warning, 0, $"couldn't parse items from category: {categoryRecource.CategoryLink}")(
+                LoggingLevel.Warning, 0, $"couldn't parse items from category: {categoryResource.CategoryLink}")(
                 this.logger, null);
 
             return parsedItems;

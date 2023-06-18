@@ -15,7 +15,7 @@ using GoodsTracker.DataCollector.Models.Constants;
 internal sealed class EvrooptParser : IItemParser
 {
     private static readonly Regex itemTitleRegex = new(
-        @"^(.*?)(?:,\s)?\s?((\d+\.?\d*\s?)(\w*)?)\.?\s*$", RegexOptions.Compiled);
+        @"^(.*?)(?:,)?\s((\d+\.?\d*)\s?([^\d\s]+))\.?$", RegexOptions.Compiled);
 
     private static readonly IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 

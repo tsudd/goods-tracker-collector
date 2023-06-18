@@ -86,12 +86,10 @@ internal sealed class EvrooptScraper : IScraper
 
         foreach ((string CategoryLink, string CategoryName) category in categories)
         {
-            IEnumerable<ItemModel> categoryItems = await this.ProcessCategoryPageAsync(categories.Last())
+            IEnumerable<ItemModel> categoryItems = await this.ProcessCategoryPageAsync(category)
                                                              .ConfigureAwait(false);
 
             items.AddRange(categoryItems);
-
-            break;
         }
 
         return items;

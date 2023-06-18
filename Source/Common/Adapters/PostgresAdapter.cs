@@ -40,7 +40,7 @@ internal sealed class PostgresAdapter : IDataAdapter
     {
         if (!tracker.IsThereAnythingToSave())
         {
-            this.Log(LogLevel.Warning, "Nothing to save to save for.");
+            this.Log(LogLevel.Warning, "Nothing to save to save.");
 
             return;
         }

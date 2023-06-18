@@ -2,9 +2,6 @@ using System.Text.RegularExpressions;
 
 using GoodsTracker.DataCollector.Common.Mappers.Abstractions;
 using GoodsTracker.DataCollector.Common.Parsers.Abstractions;
-
-using Microsoft.Extensions.Logging;
-
 using GoodsTracker.DataCollector.Models.Constants;
 
 using System.Text.Json;
@@ -15,36 +12,30 @@ using FluentResults;
 
 namespace GoodsTracker.DataCollector.Common.Parsers;
 
-public sealed class YaNeighborsParser : IItemParser
+internal sealed class YaNeighborsParser : ItemParser
 {
     private static readonly Regex itemTitleRegex = new(@"^(.*)(\s(\d+\.?\d*\s?)(\w*)?)$", RegexOptions.Compiled);
     private static readonly Regex itemWeightRegex = new(@"^(\d*)\s?(\w+)$", RegexOptions.Compiled);
     private const int maxLengthOfSecondTitle = 70;
-    private ILogger<YaNeighborsParser> logger;
 
-    internal YaNeighborsParser(ILogger<YaNeighborsParser> logger)
+    public override Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
     {
-        this.logger = logger;
-    }
-
-    public Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
-    {
-        var getDocumentResult = TryParseJsonDocument(rawItem);
+        Result<JsonDocument> getDocumentResult = ParseJsonDocument(rawItem);
 
         if (getDocumentResult.IsFailed)
         {
             return getDocumentResult.ToResult();
         }
 
-        using var productDoc = getDocumentResult.Value;
-        var root = productDoc.RootElement;
+        using JsonDocument? productDoc = getDocumentResult.Value;
+        JsonElement root = productDoc.RootElement;
         var fields = new Dictionary<ItemFields, string>();
-        var itemNode = root.GetProperty("menu_item");
+        JsonElement itemNode = root.GetProperty("menu_item");
 
         // TODO: create general method for all try get prop values
         if (itemNode.TryGetPropertyValue("name", out string rawTitle))
         {
-            var itemTitleMatch = itemTitleRegex.Match(rawTitle);
+            Match itemTitleMatch = itemTitleRegex.Match(rawTitle);
 
             if (itemTitleMatch.Success)
             {
@@ -142,21 +133,9 @@ public sealed class YaNeighborsParser : IItemParser
         return Result.Ok(fields);
     }
 
-    private static Result<JsonDocument> TryParseJsonDocument(string rawJson)
-    {
-        try
-        {
-            return Result.Ok(JsonDocument.Parse(rawJson));
-        }
-        catch (JsonException ex)
-        {
-            return Result.Fail(new Error("couldn't parse item's JSON").CausedBy(ex));
-        }
-    }
-
     private static void TryReadItemDetails(JsonElement detailsElement, ref Dictionary<ItemFields, string> fieldsDict)
     {
-        foreach (var detail in detailsElement.EnumerateArray())
+        foreach (JsonElement detail in detailsElement.EnumerateArray())
         {
             if (detail.TryGetProperty("type", out JsonElement type))
             {
@@ -214,7 +193,7 @@ public sealed class YaNeighborsParser : IItemParser
     {
         var categories = new List<string>();
 
-        foreach (var category in categoriesElement.EnumerateArray())
+        foreach (JsonElement category in categoriesElement.EnumerateArray())
         {
             if (category.TryGetPropertyValue("name", out string categoryName))
             {

@@ -23,7 +23,7 @@ namespace GoodsTracker.DataCollector.Common.Factories;
 
 public sealed class DataCollectorFactory : IDataCollectorFactory
 {
-    private static IWebDriver? driverInstanse;
+    private static IWebDriver? driverInstance;
     private readonly ILoggerFactory loggerFactory;
     private readonly IDbContextFactory<CollectorContext> contextFactory;
 
@@ -33,9 +33,10 @@ public sealed class DataCollectorFactory : IDataCollectorFactory
         this.contextFactory = contextFactory;
     }
 
-    public IDataAdapter CreateDataAdapter(IOptions<AdapterConfig> options)
+    public IDataAdapter CreateDataAdapter(IOptions<AdapterConfig> config)
     {
-        var providedConfig = options.Value;
+        ArgumentNullException.ThrowIfNull(config);
+        AdapterConfig providedConfig = config.Value;
 
         return providedConfig.AdapterName switch
         {
@@ -52,7 +53,7 @@ public sealed class DataCollectorFactory : IDataCollectorFactory
     {
         return parserName switch
         {
-            nameof(YaNeighborsParser) => new YaNeighborsParser(this.loggerFactory.CreateLogger<YaNeighborsParser>()),
+            nameof(YaNeighborsParser) => new YaNeighborsParser(),
             nameof(EvrooptParser) => new EvrooptParser(),
             var _ => throw new ArgumentException($"couldn't create {parserName}: no such parser in the app."),
         };
@@ -61,6 +62,8 @@ public sealed class DataCollectorFactory : IDataCollectorFactory
     public IScraper CreateScraper(
         ScraperConfig config, IItemParser? parser = null, IItemMapper? mapper = null, IRequester? requester = null)
     {
+        ArgumentNullException.ThrowIfNull(config);
+
         return config.Name switch
         {
             nameof(YaNeighborsScraper) => new YaNeighborsScraper(
@@ -75,7 +78,8 @@ public sealed class DataCollectorFactory : IDataCollectorFactory
 
     public IItemTracker CreateTracker(IOptions<TrackerConfig> options)
     {
-        var config = options.Value;
+        ArgumentNullException.ThrowIfNull(options);
+        TrackerConfig config = options.Value;
 
         return config.TrackerName switch
         {
@@ -86,16 +90,11 @@ public sealed class DataCollectorFactory : IDataCollectorFactory
 
     private static IWebDriver GetWebDriverInstance()
     {
-        if (driverInstanse is null)
-        {
-            driverInstanse = new ChromeDriver();
-        }
-
-        return driverInstanse;
+        return driverInstance ??= new ChromeDriver();
     }
 
     public void Dispose()
     {
-        driverInstanse?.Dispose();
+        driverInstance?.Dispose();
     }
 }

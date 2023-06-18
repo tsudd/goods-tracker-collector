@@ -12,7 +12,7 @@ using GoodsTracker.DataCollector.Common.Parsers.Abstractions;
 using GoodsTracker.DataCollector.Common.Parsers.Extensions;
 using GoodsTracker.DataCollector.Models.Constants;
 
-internal sealed class EvrooptParser : IItemParser
+internal sealed class EvrooptParser : ItemParser
 {
     private static readonly Regex itemTitleRegex = new(
         @"^(.*?)(?:,)?\s((\d+\.?\d*)\s?([^\d\s]+))\.?$", RegexOptions.Compiled);
@@ -20,9 +20,9 @@ internal sealed class EvrooptParser : IItemParser
     private static readonly IFormatProvider formatProvider = CultureInfo.InvariantCulture;
 
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
-    public Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
+    public override Result<Dictionary<ItemFields, string>> ParseItem(string rawItem)
     {
-        Result<JsonDocument> getDocumentResult = TryParseJsonDocument(rawItem);
+        Result<JsonDocument> getDocumentResult = ParseJsonDocument(rawItem);
 
         if (getDocumentResult.IsFailed)
         {
@@ -82,19 +82,6 @@ internal sealed class EvrooptParser : IItemParser
         }
 
         return Result.Ok(fields);
-    }
-
-    // TODO: move to abstract class
-    private static Result<JsonDocument> TryParseJsonDocument(string rawJson)
-    {
-        try
-        {
-            return Result.Ok(JsonDocument.Parse(rawJson));
-        }
-        catch (JsonException ex)
-        {
-            return Result.Fail(new Error("couldn't parse item's JSON").CausedBy(ex));
-        }
     }
 
     private static Result AddItemNameAndWeightInfo(JsonElement itemNode, Dictionary<ItemFields, string> fields)

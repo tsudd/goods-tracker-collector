@@ -38,6 +38,13 @@ internal sealed class PostgresAdapter : IDataAdapter
 
     public async Task SaveItemsAsync(IItemTracker tracker, IEnumerable<int> shopIds)
     {
+        if (!tracker.IsThereAnythingToSave())
+        {
+            this.Log(LogLevel.Warning, "Nothing to save to save for.");
+
+            return;
+        }
+
         this.Log(LogLevel.Information, "Starting saving items into PostgreSQL");
         this.Log(LogLevel.Information, "Fetching vendors with the provided list of ids...");
 

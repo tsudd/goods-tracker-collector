@@ -26,70 +26,56 @@ using FluentResults;
 
 namespace GoodsTracker.DataCollector.Common.Scrapers;
 
-public sealed class YaNeighborsScraper : IScraper
+using GoodsTracker.DataCollector.Models.Constants;
+
+internal sealed class YaNeighborsScraper : IScraper
 {
     private const int requestAttemptsMaxAmount = 3;
     private const int delayBetweenRequests = 600;
-    private const int maxWaitingTime = 20;
+    private const int maxWaitingTime = 40;
 
-    private readonly static Regex productPublicIdPattern = new Regex(
+    private static readonly Regex productPublicIdPattern = new(
         @"([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\?placeSlug=(.*)$",
         RegexOptions.Compiled);
 
-    private readonly IRequester _requester;
-    private readonly IItemParser _parser;
-    private readonly IItemMapper _mapper;
-    private readonly IWebDriver _driver;
-    private readonly ScraperConfig _config;
-    private ILogger<YaNeighborsScraper> _logger;
-    private readonly WebDriverWait _wait;
+    private readonly IRequester requester;
+    private readonly IItemParser parser;
+    private readonly IItemMapper mapper;
+    private readonly IWebDriver driver;
+    private readonly ScraperConfig config;
+    private readonly ILogger<YaNeighborsScraper> logger;
+    private readonly WebDriverWait wait;
 
     public YaNeighborsScraper(
         ScraperConfig config, ILogger<YaNeighborsScraper> logger, IItemParser parser, IWebDriver driver,
         IItemMapper? mapper = null, IRequester? requester = null)
     {
-        if (requester is null)
-        {
-            _requester = new BasicRequester();
-        }
-        else
-        {
-            _requester = requester;
-        }
-
-        if (mapper is null)
-        {
-            _mapper = new BasicMapper();
-        }
-        else
-        {
-            _mapper = mapper;
-        }
-
-        _logger = logger;
-        _config = config;
-        _parser = parser;
-        _driver = driver;
-        _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(maxWaitingTime));
+        this.requester = requester ?? new BasicRequester();
+        this.mapper = mapper ?? new BasicMapper();
+        this.logger = logger;
+        this.config = config;
+        this.parser = parser;
+        this.driver = driver;
+        this.wait = new WebDriverWait(this.driver, TimeSpan.FromSeconds(maxWaitingTime));
     }
 
     public ScraperConfig GetConfig()
     {
-        return _config;
+        return this.config;
     }
 
     public async Task<IList<ItemModel>> GetItemsAsync()
     {
-        var categories = GetCategoryLinks();
+        IEnumerable<(string CategoryLink, string CategoryName)> categories = this.GetCategoryLinks();
         var items = new List<ItemModel>();
 
-        foreach (var category in categories)
+        foreach ((string CategoryLink, string CategoryName) category in categories)
         {
-            var categoryItems = await ProcessCategoryPageAsync(category)
-                .ConfigureAwait(false);
+            IEnumerable<ItemModel> categoryItems = await this.ProcessCategoryPageAsync(category)
+                                                             .ConfigureAwait(false);
 
             // TODO: optimize this post processing
-            foreach (var item in categoryItems)
+            foreach (ItemModel item in categoryItems)
             {
                 item.Categories.Add(category.CategoryName);
             }
@@ -102,31 +88,25 @@ public sealed class YaNeighborsScraper : IScraper
 
     private IEnumerable<(string CategoryLink, string CategoryName)> GetCategoryLinks()
     {
-        var links = new List<(string CategoryLink, string CategoryName)>();
+        this.driver.Navigate()
+            .GoToUrl(new Uri(this.config.ShopUrl + this.config.ShopStartRecource));
 
-        _driver.Navigate()
-               .GoToUrl(new Uri(_config.ShopUrl + _config.ShopStartRecource));
-
-        WaitForPageToLoad(By.XPath("//div[@class='UiKitShopMenu_root']/ul/li/a"));
+        this.WaitForPageToLoad(By.XPath("//div[@class='UiKitShopMenu_root']/ul/li/a"));
         var htmlDoc = new HtmlDocument();
-        htmlDoc.LoadHtml(_driver.PageSource);
-        var rawLinks = htmlDoc.DocumentNode.SelectNodes("//div[@class='UiKitShopMenu_root']/ul/li/a");
+        htmlDoc.LoadHtml(this.driver.PageSource);
+        HtmlNodeCollection? rawLinks = htmlDoc.DocumentNode.SelectNodes("//div[@class='UiKitShopMenu_root']/ul/li/a");
 
-        foreach (var raw in rawLinks)
-        {
-            links.Add(
-                (raw.Attributes["href"]
-                    .Value, raw.SelectSingleNode("div[@class='UiKitDesktopShopMenuItem_text']")
-                               .InnerText));
-        }
-
-        return links;
+        return rawLinks.Select(
+                           static raw => (raw.Attributes["href"]
+                                             .Value, raw.SelectSingleNode("div[@class='UiKitDesktopShopMenuItem_text']")
+                                                        .InnerText))
+                       .ToList();
     }
 
     private HtmlDocument GetCurrentHtmlDoc()
     {
         var doc = new HtmlDocument();
-        doc.LoadHtml(_driver.PageSource);
+        doc.LoadHtml(this.driver.PageSource);
 
         return doc;
     }
@@ -134,63 +114,60 @@ public sealed class YaNeighborsScraper : IScraper
     private async Task<IEnumerable<ItemModel>> ProcessCategoryPageAsync(
         (string CategoryLink, string CategoryName) categoryRecource)
     {
-        _driver.Navigate()
-               .GoToUrl(new Uri(_config.ShopUrl + categoryRecource.CategoryLink));
+        this.driver.Navigate()
+            .GoToUrl(new Uri(this.config.ShopUrl + categoryRecource.CategoryLink));
 
-        WaitForPageToLoad(By.XPath("//ul[@class='DesktopGoodsList_list']/li/a"));
-        var page = GetCurrentHtmlDoc();
+        this.WaitForPageToLoad(By.XPath("//ul[@class='DesktopGoodsList_list']/li/a"));
+        HtmlDocument page = this.GetCurrentHtmlDoc();
         var parsedItems = new List<ItemModel>();
-        var itemNodes = page.DocumentNode.SelectNodes("//li[@class='DesktopGoodsList_item']/a");
+        HtmlNodeCollection? itemNodes = page.DocumentNode.SelectNodes("//li[@class='DesktopGoodsList_item']/a");
 
         if (itemNodes == null)
         {
             LoggerMessage.Define(
                 LoggingLevel.Warning, 0, $"couldn't parse items from category: {categoryRecource.CategoryLink}")(
-                this._logger, null);
+                this.logger, null);
 
             return parsedItems;
         }
 
-        var results = (await Task.WhenAll(itemNodes.Select(itemNode => ProcessItemAsync(itemNode)))
-                                 .ConfigureAwait(false)).Merge();
-
-        LoggerMessage.Define(LoggingLevel.Error, 0, string.Join(",", results.Reasons.Select(r => r.Message)))(
-            this._logger, null);
+        Result<IEnumerable<ItemModel>>? results = (await Task.WhenAll(itemNodes.Select(this.ProcessItemAsync))
+                                                             .ConfigureAwait(false)).Merge();
 
         return results.Value;
     }
 
     private async Task<Result<ItemModel>> ProcessItemAsync(HtmlNode itemNode)
     {
-        var productLink = itemNode.Attributes["href"]
-                                  .Value;
+        string? productLink = itemNode.Attributes["href"]
+                                      .Value;
 
-        var productGuidMatch = productPublicIdPattern.Match(productLink);
+        Match productGuidMatch = productPublicIdPattern.Match(productLink);
 
         if (!productGuidMatch.Success)
         {
-            return Result.Fail($"couldn't match product recource to fetch info: {productLink}");
+            return Result.Fail($"couldn't match product resource to fetch info: {productLink}");
         }
 
-        var requestProductResult = await RequestProductInfoAsyncWithMultipleAttempts(
-                productGuidMatch.Groups[1]
-                                .Value, productGuidMatch.Groups[2]
-                                                        .Value)
-            .ConfigureAwait(false);
+        Result<string> requestProductResult = await this.RequestProductInfoAsyncWithMultipleAttempts(
+                                                            productGuidMatch.Groups[1]
+                                                                            .Value, productGuidMatch.Groups[2]
+                                                                .Value)
+                                                        .ConfigureAwait(false);
 
         if (requestProductResult.IsFailed)
         {
             return Result.Fail($"couldn't fetch product from {productLink}: {requestProductResult.Errors}");
         }
 
-        var parseItemResult = _parser.ParseItem(requestProductResult.Value);
+        Result<Dictionary<ItemFields, string>> parseItemResult = this.parser.ParseItem(requestProductResult.Value);
 
         if (parseItemResult.IsFailed)
         {
             return Result.Fail($"couldn't parse product info from {productLink}: {parseItemResult.Errors}");
         }
 
-        return _mapper.MapItemFields(parseItemResult.Value);
+        return this.mapper.MapItemFields(parseItemResult.Value);
     }
 
     private async Task<Result<string>> RequestProductInfoAsyncWithMultipleAttempts(string productGuid, string placeSlug)
@@ -204,17 +181,17 @@ public sealed class YaNeighborsScraper : IScraper
 
             try
             {
-                return await _requester.PostAsync(
-                                           productInfoUri, _config.Headers,
-                                           GenerateContentBodyForProductFetch(productGuid, placeSlug))
-                                       .ConfigureAwait(false);
+                return await this.requester.PostAsync(
+                                     productInfoUri, this.config.Headers,
+                                     GenerateContentBodyForProductFetch(productGuid, placeSlug))
+                                 .ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
                 LoggerMessage.Define(
                     LoggingLevel.Warning, 0,
                     $"couldn't fetch product info: {ex.Message}. Request will be retried after the delay")(
-                    this._logger, ex);
+                    this.logger, ex);
 
                 await Task.Delay(delayBetweenRequests)
                           .ConfigureAwait(false);
@@ -226,24 +203,26 @@ public sealed class YaNeighborsScraper : IScraper
     }
 
     private static string GenerateContentBodyForProductFetch(string productId, string placeSlug)
-        => "{" +
-           $"\"place_slug\":\"{placeSlug}\"," +
-           $"\"product_public_id\":\"{productId}\"," +
-           "\"with_categories\":true" +
-           "}";
+    {
+        return "{" +
+               $"\"place_slug\":\"{placeSlug}\"," +
+               $"\"product_public_id\":\"{productId}\"," +
+               "\"with_categories\":true" +
+               "}";
+    }
 
     private void WaitForPageToLoad(By condition)
     {
         try
         {
-            _wait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(condition));
+            this.wait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(condition));
         }
         catch (WebDriverTimeoutException ex)
         {
-            LoggerMessage.Define(LoggingLevel.Critical, 0, $"loading of the page took to much: {_driver.Url}")(
-                this._logger, ex);
+            LoggerMessage.Define(LoggingLevel.Critical, 0, $"loading of the page took to much: {this.driver.Url}")(
+                this.logger, ex);
 
-            throw new InvalidOperationException("coudln't get category links after page loading.");
+            throw new InvalidOperationException("couldn't get category links after page loading.");
         }
     }
 }
